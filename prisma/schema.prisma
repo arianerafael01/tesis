@@ -1,0 +1,146 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum ClassRoomType {
+  theoretical
+  Workshop
+  ComputerLab
+  Gym
+}
+
+enum Shift {
+  MorningShift
+  LateShift
+}
+
+enum Day {
+  M
+  T
+  W
+  TH
+  F
+}
+
+// User model (for authentication)
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+// Teachers table
+model Teacher {
+  id           String   @id @default(uuid())
+  firstName    String
+  lastName     String
+  idNumber     String   @unique @db.VarChar(20)
+  fileNumber   String   @db.VarChar(40)
+  birthdate    DateTime
+  nationality  String   @db.VarChar(40)
+  address      String   @db.VarChar(100)
+  neighborhood String   @db.VarChar(100)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  subjectsTeachers SubjectsTeacher[]
+  availabilities   Availability[]
+
+  @@map("teachers")
+}
+
+// Subjects table
+model Subject {
+  id        String   @id @default(uuid())
+  name      String   @db.VarChar(40)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  courseId          String
+  course            Course @relation(fields: [courseId], references: [id])
+  subjectsTeachers  SubjectsTeacher[]
+
+  @@map("subjects")
+}
+
+// SubjectsTeachers junction table
+model SubjectsTeacher {
+  id        String   @id @default(uuid())
+  teacherId String
+  subjectId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  teacher Teacher @relation(fields: [teacherId], references: [id])
+  subject Subject @relation(fields: [subjectId], references: [id])
+
+  @@unique([teacherId, subjectId])
+  @@map("subjects_teachers")
+}
+
+// Classrooms table
+model Classroom {
+  id            String        @id @default(uuid())
+  name          String        @db.VarChar(40)
+  classRoomType ClassRoomType
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  courses Course[]
+
+  @@map("classrooms")
+}
+
+// Courses table
+model Course {
+  id           String   @id @default(uuid())
+  name         String   @db.VarChar(30)
+  shift        Shift
+  cycle        String   @db.VarChar(5)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  classRoomId String
+  classroom   Classroom @relation(fields: [classRoomId], references: [id])
+  subjects    Subject[]
+
+  @@map("courses")
+}
+
+// Availabilities table
+model Availability {
+  id        String   @id @default(uuid())
+  teacherId String
+  day       Day
+  timeRanges String[] // Array of TIME values
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  teacher Teacher @relation(fields: [teacherId], references: [id])
+
+  @@map("availabilities")
+}

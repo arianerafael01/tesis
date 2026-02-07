@@ -1,0 +1,13 @@
+                                 Table "public.classrooms"
+    Column     |              Type              | Collation | Nullable |      Default      
+---------------+--------------------------------+-----------+----------+-------------------
+ id            | text                           |           | not null | 
+ name          | character varying(40)          |           | not null | 
+ classRoomType | "ClassRoomType"                |           | not null | 
+ createdAt     | timestamp(3) without time zone |           | not null | CURRENT_TIMESTAMP
+ updatedAt     | timestamp(3) without time zone |           | not null | 
+Indexes:
+    "classrooms_pkey" PRIMARY KEY, btree (id)
+Referenced by:
+    TABLE "courses" CONSTRAINT "courses_classRoomId_fkey" FOREIGN KEY ("classRoomId") REFERENCES classrooms(id) ON UPDATE CASCADE ON DELETE RESTRICT
+
