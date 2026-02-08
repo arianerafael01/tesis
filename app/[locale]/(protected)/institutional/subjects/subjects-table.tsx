@@ -10,6 +10,7 @@ import DeleteSubjectDialog from './delete-subject-dialog'
 interface Subject {
   id: string
   name: string
+  modules: number
   courseId: string
   createdAt: Date
   course: {
@@ -38,6 +39,7 @@ export default function SubjectsTable({ subjects, courses }: { subjects: Subject
             <TableRow>
               <TableHead>{t('name')}</TableHead>
               <TableHead>{t('course')}</TableHead>
+              <TableHead>{t('modules')}</TableHead>
               <TableHead>{t('teachers')}</TableHead>
               <TableHead>{t('actions')}</TableHead>
             </TableRow>
@@ -48,6 +50,9 @@ export default function SubjectsTable({ subjects, courses }: { subjects: Subject
                 <TableCell className="font-medium">{subject.name}</TableCell>
                 <TableCell>
                   <Badge color="secondary">{subject.course.name}</Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge color="default">{subject.modules}</Badge>
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-1">

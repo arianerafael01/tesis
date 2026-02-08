@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Icon } from '@/components/ui/icon'
 import { useTranslations } from 'next-intl'
+import { useState } from 'react'
 import { createSubject, updateSubject, deleteSubject } from './subjects/actions'
 
 interface Subject {
@@ -48,8 +49,15 @@ export default function SubjectsClient({ subjects, courses }: {
 // Add Subject Dialog Component
 function AddSubjectDialog({ courses }: { courses: Course[] }) {
   const t = useTranslations('subjectsPage')
+  const [open, setOpen] = useState(false)
+
+  const handleSubmit = async (formData: FormData) => {
+    await createSubject(formData)
+    setOpen(false)
+  }
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <Icon icon="heroicons-outline:plus" className="mr-2 h-4 w-4" />
@@ -60,7 +68,7 @@ function AddSubjectDialog({ courses }: { courses: Course[] }) {
         <DialogHeader>
           <DialogTitle>{t('addNewSubject')}</DialogTitle>
         </DialogHeader>
-        <form action={createSubject}>
+        <form action={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
@@ -90,6 +98,21 @@ function AddSubjectDialog({ courses }: { courses: Course[] }) {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="modules" className="text-right">
+                {t('modules')}
+              </Label>
+              <Input
+                id="modules"
+                name="modules"
+                type="number"
+                min={1}
+                max={20}
+                defaultValue={1}
+                className="col-span-3"
+                required
+              />
             </div>
           </div>
           <div className="flex justify-end gap-2">

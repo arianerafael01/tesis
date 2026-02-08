@@ -262,7 +262,9 @@
     "teachers": "Teachers",
     "courses": "Courses",
     "subjects": "Subjects",
-    "classrooms": "Classrooms"
+    "classrooms": "Classrooms",
+    "weeklySchedule": "Weekly Schedule",
+    "reports": "Reports"
   },
   "teachersPage": {
     "title": "Teachers",
@@ -283,6 +285,7 @@
     "address": "Address",
     "neighborhood": "Neighborhood",
     "subjects": "Subjects",
+    "course": "Course",
     "actions": "Actions",
     "notAssigned": "Not Assigned",
     "addTeacher": "Add Teacher",
@@ -332,6 +335,7 @@
     "deleteSubjectWarning": "This action cannot be undone.",
     "updateSubject": "Update Subject",
     "selectCourse": "Select course",
+    "modules": "Modules",
     "more": "more"
   },
   "coursesPage": {
@@ -374,6 +378,18 @@
     "more": "more"
   },
 
+  "weeklySchedulePage": {
+    "title": "Weekly Teacher Schedule",
+    "description": "Weekly view of availability and assigned subjects per teacher.",
+    "selectTeacher": "Select teacher",
+    "allTeachers": "All teachers",
+    "print": "Print",
+    "time": "Time",
+    "hoursAvailable": "hours available",
+    "subjectsAssigned": "subjects assigned",
+    "available": "Available",
+    "noTeachersFound": "No teachers found with configured availability."
+  },
   "products": {
     "title": "Products",
     "productDetails": "Product Details",

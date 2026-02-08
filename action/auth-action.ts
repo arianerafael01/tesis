@@ -11,6 +11,6 @@ export const loginUser = async (data: any) => {
     });
     return response;
   } catch (error) {
-    throw new Error(error as string);
+    return { error: "Invalid email or password" };
   }
 };

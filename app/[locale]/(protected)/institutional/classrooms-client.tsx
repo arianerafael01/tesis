@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Icon } from '@/components/ui/icon'
 import { useTranslations } from 'next-intl'
+import { useState } from 'react'
 import { createClassroom, updateClassroom, deleteClassroom } from './classrooms/actions'
 
 interface Classroom {
@@ -36,8 +37,15 @@ export default function ClassroomsClient({ classrooms }: { classrooms: Classroom
 // Add Classroom Dialog Component
 function AddClassroomDialog() {
   const t = useTranslations('classroomsPage')
+  const [open, setOpen] = useState(false)
+
+  const handleSubmit = async (formData: FormData) => {
+    await createClassroom(formData)
+    setOpen(false)
+  }
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <Icon icon="heroicons-outline:plus" className="mr-2 h-4 w-4" />
@@ -48,7 +56,7 @@ function AddClassroomDialog() {
         <DialogHeader>
           <DialogTitle>{t('addNewClassroom')}</DialogTitle>
         </DialogHeader>
-        <form action={createClassroom}>
+        <form action={handleSubmit}>
           <div className="grid gap-6 py-4">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-sm font-medium">

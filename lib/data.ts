@@ -1,9 +1,9 @@
 // user data 
 const users = [
   {
-    name: "dashcode",
-    email: "dashcode@codeshaper.net",
-    password: "password",
+    name: "instituto etchegoyen",
+    email: "admin@instituto-etchegoyen.edu.ar",
+    password: "institucion123",
     image: '/images/users/user-1.jpg',
   },
   

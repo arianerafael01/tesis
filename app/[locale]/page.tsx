@@ -3,7 +3,8 @@ import LoginForm from "@/components/partials/auth/login-form";
 import Image from "next/image";
 import Social from "@/components/partials/auth/social";
 import Logo from "@/components/partials/auth/logo";
-const Login = ({ params: { locale } }: { params: { locale: string } }) => {
+const Login = async ({ params }: { params: Promise<{ locale: string }> }) => {
+  const { locale } = await params;
   return (
     <>
       <div className="flex w-full items-center overflow-hidden min-h-dvh h-dvh basis-full">

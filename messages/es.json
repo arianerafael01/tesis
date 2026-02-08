@@ -262,7 +262,9 @@
     "teachers": "Profesores",
     "courses": "Cursos",
     "subjects": "Materias",
-    "classrooms": "Aulas"
+    "classrooms": "Aulas",
+    "weeklySchedule": "Grilla Semanal",
+    "reports": "Reportes"
   },
   "teachersPage": {
     "title": "Profesores",
@@ -283,6 +285,7 @@
     "address": "Dirección",
     "neighborhood": "Barrio",
     "subjects": "Materias",
+    "course": "Curso",
     "actions": "Acciones",
     "notAssigned": "No Asignado",
     "addTeacher": "Agregar Profesor",
@@ -332,6 +335,7 @@
     "deleteSubjectWarning": "Esta acción no se puede deshacer.",
     "updateSubject": "Actualizar Materia",
     "selectCourse": "Seleccionar curso",
+    "modules": "Módulos",
     "more": "más"
   },
   "coursesPage": {
@@ -374,6 +378,18 @@
     "more": "más"
   },
 
+  "weeklySchedulePage": {
+    "title": "Grilla Semanal de Profesores",
+    "description": "Vista semanal de disponibilidad y materias asignadas por profesor.",
+    "selectTeacher": "Seleccionar profesor",
+    "allTeachers": "Todos los profesores",
+    "print": "Imprimir",
+    "time": "Horario",
+    "hoursAvailable": "horas disponibles",
+    "subjectsAssigned": "materias asignadas",
+    "available": "Disponible",
+    "noTeachersFound": "No se encontraron profesores con disponibilidad configurada."
+  },
   "products": {
     "title": "Products",
     "productDetails": "Product Details",

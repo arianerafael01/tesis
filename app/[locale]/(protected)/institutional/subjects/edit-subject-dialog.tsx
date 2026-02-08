@@ -12,6 +12,7 @@ import { updateSubject } from './actions'
 interface Subject {
   id: string
   name: string
+  modules: number
   courseId: string
   course: {
     id: string
@@ -75,6 +76,21 @@ export default function EditSubjectDialog({ subject, courses }: { subject: Subje
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="modules" className="text-right">
+                {t('modules')}
+              </Label>
+              <Input
+                id="modules"
+                name="modules"
+                type="number"
+                min={1}
+                max={20}
+                defaultValue={subject.modules}
+                className="col-span-3"
+                required
+              />
             </div>
           </div>
           <div className="flex justify-end gap-2">

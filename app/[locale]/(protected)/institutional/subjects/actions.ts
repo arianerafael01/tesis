@@ -6,11 +6,13 @@ import { revalidatePath } from 'next/cache'
 export async function createSubject(formData: FormData) {
   const name = formData.get('name') as string
   const courseId = formData.get('courseId') as string
+  const modules = parseInt(formData.get('modules') as string) || 1
 
   await prisma.subject.create({
     data: {
       name,
       courseId,
+      modules,
     }
   })
 
@@ -20,12 +22,14 @@ export async function createSubject(formData: FormData) {
 export async function updateSubject(subjectId: string, formData: FormData) {
   const name = formData.get('name') as string
   const courseId = formData.get('courseId') as string
+  const modules = parseInt(formData.get('modules') as string) || 1
 
   await prisma.subject.update({
     where: { id: subjectId },
     data: {
       name,
       courseId,
+      modules,
     }
   })
 

@@ -102,6 +102,9 @@ export default function EditTeacherDialog({ teacher, availableSubjects }: { teac
                   defaultValue={teacher.idNumber}
                   className="w-full"
                   maxLength={20}
+                  pattern="[0-9]*"
+                  inputMode="numeric"
+                  onKeyDown={(e) => { if (!/[0-9]/.test(e.key) && !['Backspace','Delete','Tab','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault() }}
                   required
                 />
               </div>
@@ -115,6 +118,9 @@ export default function EditTeacherDialog({ teacher, availableSubjects }: { teac
                   defaultValue={teacher.fileNumber}
                   className="w-full"
                   maxLength={40}
+                  pattern="[0-9]*"
+                  inputMode="numeric"
+                  onKeyDown={(e) => { if (!/[0-9]/.test(e.key) && !['Backspace','Delete','Tab','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault() }}
                   required
                 />
               </div>

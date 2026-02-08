@@ -14,17 +14,18 @@ import DirectionProvider from "@/providers/direction-provider";
 import AuthProvider from "@/providers/auth.provider";
 
 export const metadata: Metadata = {
-  title: "Dashcode admin Template",
+  title: "Instituto Técnico Etchegoyen",
   description: "Institutional Management System",
 };
 
 export default async function RootLayout({
   children,
-  params: { locale },
+  params,
 }: Readonly<{
   children: React.ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }>) {
+  const { locale } = await params;
   const messages = await getMessages();
   const direction = getLangDir(locale);
   return (

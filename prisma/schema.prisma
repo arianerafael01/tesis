@@ -5,8 +5,9 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../lib/generated/prisma"
+  provider      = "prisma-client-js"
+  output        = "../lib/generated/prisma"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -72,12 +73,13 @@ model Teacher {
 model Subject {
   id        String   @id @default(uuid())
   name      String   @db.VarChar(40)
+  modules   Int      @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
   courseId          String
-  course            Course @relation(fields: [courseId], references: [id])
+  course            Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   subjectsTeachers  SubjectsTeacher[]
 
   @@map("subjects")
@@ -92,8 +94,8 @@ model SubjectsTeacher {
   updatedAt DateTime @updatedAt
 
   // Relations
-  teacher Teacher @relation(fields: [teacherId], references: [id])
-  subject Subject @relation(fields: [subjectId], references: [id])
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
 
   @@unique([teacherId, subjectId])
   @@map("subjects_teachers")
@@ -124,7 +126,7 @@ model Course {
 
   // Relations
   classRoomId String
-  classroom   Classroom @relation(fields: [classRoomId], references: [id])
+  classroom   Classroom @relation(fields: [classRoomId], references: [id], onDelete: Cascade)
   subjects    Subject[]
 
   @@map("courses")
@@ -140,7 +142,7 @@ model Availability {
   updatedAt DateTime @updatedAt
 
   // Relations
-  teacher Teacher @relation(fields: [teacherId], references: [id])
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
 
   @@map("availabilities")
 }

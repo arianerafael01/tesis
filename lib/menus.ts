@@ -34,23 +34,29 @@ export function getMenuList(pathname: string, t: any): Group[] {
 
   return [
     {
+      groupLabel: t("reports"),
+      id: "reports",
+      menus: [
+        {
+          id: "weeklySchedule",
+          href: "/institutional/reports/weekly-schedule",
+          label: t("weeklySchedule"),
+          active: pathname.includes("/institutional/reports/weekly-schedule"),
+          icon: "heroicons-outline:calendar-days",
+          submenus: [],
+        },
+      ],
+    },
+    {
       groupLabel: t("administracion"),
       id: "administracion",
       menus: [
         {
-          id: "teachers",
-          href: "/institutional/teachers",
-          label: t("teachers"),
-          active: pathname.includes("/institutional/teachers"),
-          icon: "heroicons-outline:user-group",
-          submenus: [],
-        },
-        {
-          id: "subjects",
-          href: "/institutional/subjects",
-          label: t("subjects"),
-          active: pathname.includes("/institutional/subjects"),
-          icon: "heroicons-outline:book-open",
+          id: "classrooms",
+          href: "/institutional/classrooms",
+          label: t("classrooms"),
+          active: pathname.includes("/institutional/classrooms"),
+          icon: "heroicons-outline:building-office",
           submenus: [],
         },
         {
@@ -62,11 +68,19 @@ export function getMenuList(pathname: string, t: any): Group[] {
           submenus: [],
         },
         {
-          id: "classrooms",
-          href: "/institutional/classrooms",
-          label: t("classrooms"),
-          active: pathname.includes("/institutional/classrooms"),
-          icon: "heroicons-outline:building-office",
+          id: "subjects",
+          href: "/institutional/subjects",
+          label: t("subjects"),
+          active: pathname.includes("/institutional/subjects"),
+          icon: "heroicons-outline:book-open",
+          submenus: [],
+        },
+        {
+          id: "teachers",
+          href: "/institutional/teachers",
+          label: t("teachers"),
+          active: pathname.includes("/institutional/teachers"),
+          icon: "heroicons-outline:user-group",
           submenus: [],
         },
       ],
@@ -78,23 +92,29 @@ export function getHorizontalMenuList(pathname: string, t: any): Group[] {
 
   return [
     {
+      groupLabel: t("reports"),
+      id: "reports",
+      menus: [
+        {
+          id: "weeklySchedule",
+          href: "/institutional/reports/weekly-schedule",
+          label: t("weeklySchedule"),
+          active: pathname.includes("/institutional/reports/weekly-schedule"),
+          icon: "heroicons-outline:calendar-days",
+          submenus: [],
+        },
+      ],
+    },
+    {
       groupLabel: t("administracion"),
       id: "administracion",
       menus: [
         {
-          id: "teachers",
-          href: "/institutional/teachers",
-          label: t("teachers"),
-          active: pathname.includes("/institutional/teachers"),
-          icon: "heroicons-outline:user-group",
-          submenus: [],
-        },
-        {
-          id: "subjects",
-          href: "/institutional/subjects",
-          label: t("subjects"),
-          active: pathname.includes("/institutional/subjects"),
-          icon: "heroicons-outline:book-open",
+          id: "classrooms",
+          href: "/institutional/classrooms",
+          label: t("classrooms"),
+          active: pathname.includes("/institutional/classrooms"),
+          icon: "heroicons-outline:building-office",
           submenus: [],
         },
         {
@@ -106,11 +126,19 @@ export function getHorizontalMenuList(pathname: string, t: any): Group[] {
           submenus: [],
         },
         {
-          id: "classrooms",
-          href: "/institutional/classrooms",
-          label: t("classrooms"),
-          active: pathname.includes("/institutional/classrooms"),
-          icon: "heroicons-outline:building-office",
+          id: "subjects",
+          href: "/institutional/subjects",
+          label: t("subjects"),
+          active: pathname.includes("/institutional/subjects"),
+          icon: "heroicons-outline:book-open",
+          submenus: [],
+        },
+        {
+          id: "teachers",
+          href: "/institutional/teachers",
+          label: t("teachers"),
+          active: pathname.includes("/institutional/teachers"),
+          icon: "heroicons-outline:user-group",
           submenus: [],
         },
       ],

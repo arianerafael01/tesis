@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Icon } from '@/components/ui/icon'
 import { useTranslations } from 'next-intl'
+import { useState } from 'react'
 import { createTeacher, updateTeacher, deleteTeacher } from './teachers/actions'
 
 interface Teacher {
@@ -42,8 +43,21 @@ export default function TeachersClient({ teachers }: { teachers: Teacher[] }) {
 // Add Teacher Dialog Component
 function AddTeacherDialog() {
   const t = useTranslations('teachersPage')
+  const [open, setOpen] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleSubmit = async (formData: FormData) => {
+    setError(null)
+    const result = await createTeacher(formData)
+    if (result?.error) {
+      setError(result.error)
+      return
+    }
+    setOpen(false)
+  }
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <Icon icon="heroicons-outline:plus" className="mr-2 h-4 w-4" />
@@ -54,7 +68,12 @@ function AddTeacherDialog() {
         <DialogHeader>
           <DialogTitle>{t('addNewTeacher')}</DialogTitle>
         </DialogHeader>
-        <form action={createTeacher}>
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm">
+            {error}
+          </div>
+        )}
+        <form action={handleSubmit}>
           <div className="grid gap-6 py-4">
             {/* Name Fields */}
             <div className="grid grid-cols-2 gap-6">
@@ -93,6 +112,9 @@ function AddTeacherDialog() {
                   name="idNumber"
                   className="w-full"
                   maxLength={20}
+                  pattern="[0-9]*"
+                  inputMode="numeric"
+                  onKeyDown={(e) => { if (!/[0-9]/.test(e.key) && !['Backspace','Delete','Tab','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault() }}
                   required
                 />
               </div>
@@ -105,6 +127,9 @@ function AddTeacherDialog() {
                   name="fileNumber"
                   className="w-full"
                   maxLength={40}
+                  pattern="[0-9]*"
+                  inputMode="numeric"
+                  onKeyDown={(e) => { if (!/[0-9]/.test(e.key) && !['Backspace','Delete','Tab','ArrowLeft','ArrowRight'].includes(e.key)) e.preventDefault() }}
                   required
                 />
               </div>

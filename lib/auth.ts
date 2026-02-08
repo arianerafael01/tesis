@@ -22,24 +22,15 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
                 password: {},
             },
             async authorize(credentials) {
-                if (credentials === null) return null;
-                
-                try {
-                    const user = getUserByEmail(credentials?.email as string);
-                    if (user) {
-                        const isMatch = user?.password === credentials.password;
+                if (!credentials?.email || !credentials?.password) return null;
 
-                        if (isMatch) {
-                            return user;
-                        } else {
-                            throw new Error("Email or Password is not correct");
-                        }
-                    } else {
-                        throw new Error("User not found");
-                    }
-                } catch (error) {
-                    throw new Error(error as string);
-                }
+                const user = getUserByEmail(credentials.email as string);
+                if (!user) return null;
+
+                const isMatch = user.password === credentials.password;
+                if (!isMatch) return null;
+
+                return user;
             },
         }),
    

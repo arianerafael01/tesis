@@ -13,20 +13,31 @@ export async function createTeacher(formData: FormData) {
   const address = formData.get('address') as string
   const neighborhood = formData.get('neighborhood') as string
 
-  await prisma.teacher.create({
-    data: {
-      firstName,
-      lastName,
-      idNumber,
-      fileNumber,
-      birthdate: new Date(birthdate),
-      nationality,
-      address,
-      neighborhood,
+  try {
+    await prisma.teacher.create({
+      data: {
+        firstName,
+        lastName,
+        idNumber,
+        fileNumber,
+        birthdate: new Date(birthdate),
+        nationality,
+        address,
+        neighborhood,
+      }
+    })
+  } catch (error: any) {
+    if (error.code === 'P2002') {
+      const field = error.meta?.target?.[0]
+      if (field === 'idNumber') return { error: 'Ya existe un profesor con ese número de DNI.' }
+      if (field === 'fileNumber') return { error: 'Ya existe un profesor con ese número de legajo.' }
+      return { error: 'Ya existe un registro con esos datos.' }
     }
-  })
+    throw error
+  }
 
   revalidatePath('/institutional/teachers')
+  return { success: true }
 }
 
 export async function updateTeacher(teacherId: string, formData: FormData) {
