@@ -13,14 +13,24 @@ interface Course {
     id: string
     name: string
   }
-  subjects: any[]
+  coursesSubjects: {
+    subject: {
+      id: string
+      name: string
+    }
+    modules: number
+  }[]
 }
 
 export default async function CoursesPage() {
   const courses = await prisma.course.findMany({
     include: {
       classroom: true,
-      subjects: true
+      coursesSubjects: {
+        include: {
+          subject: true
+        }
+      }
     },
     orderBy: {
       createdAt: 'desc'

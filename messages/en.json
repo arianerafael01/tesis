@@ -295,6 +295,8 @@
     "deleteTeacherConfirm": "Are you sure you want to delete teacher \"{name}\"?",
     "deleteTeacherWarning": "This action cannot be undone.",
     "updateTeacher": "Update Teacher",
+    "personalData": "Personal Data",
+    "availability": "Availability",
     "assignedSubjects": "Assigned Subjects",
     "availableSubjects": "Available Subjects",
     "assignSubject": "Assign Subject",
@@ -336,7 +338,9 @@
     "updateSubject": "Update Subject",
     "selectCourse": "Select course",
     "modules": "Modules",
-    "more": "more"
+    "more": "more",
+    "noCourseSelected": "Select at least one course",
+    "cancel": "Cancel"
   },
   "coursesPage": {
     "title": "Courses",
@@ -388,7 +392,10 @@
     "hoursAvailable": "hours available",
     "subjectsAssigned": "subjects assigned",
     "available": "Available",
-    "noTeachersFound": "No teachers found with configured availability."
+    "noTeachersFound": "No teachers found with configured availability.",
+    "unassignAll": "Unassign All Subjects",
+    "autoAssign": "Auto-Assign Subjects",
+    "assigning": "Assigning..."
   },
   "products": {
     "title": "Products",

@@ -75,7 +75,7 @@ function AddClassroomDialog() {
               <Label htmlFor="classRoomType" className="text-sm font-medium">
                 {t('classRoomType')}
               </Label>
-              <Select name="classRoomType" required>
+              <Select name="classRoomType" defaultValue="theoretical" required>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder={t('selectClassRoomType')} />
                 </SelectTrigger>

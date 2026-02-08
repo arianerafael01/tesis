@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Icon } from '@/components/ui/icon'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { useRouter } from '@/components/navigation'
 import { createTeacher, updateTeacher, deleteTeacher } from './teachers/actions'
 
 interface Teacher {
@@ -45,6 +46,7 @@ function AddTeacherDialog() {
   const t = useTranslations('teachersPage')
   const [open, setOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   const handleSubmit = async (formData: FormData) => {
     setError(null)
@@ -54,6 +56,7 @@ function AddTeacherDialog() {
       return
     }
     setOpen(false)
+    router.refresh()
   }
 
   return (

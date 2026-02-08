@@ -56,7 +56,7 @@ const LoginForm = () => {
 
           })
         } else {
-          router.push('/dashboard/analytics');
+          router.push('/institutional/reports/weekly-schedule');
           toast.success("Successfully logged in");
         }
       } catch (err: any) {

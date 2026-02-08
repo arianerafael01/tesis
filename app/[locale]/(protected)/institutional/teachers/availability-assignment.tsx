@@ -5,22 +5,29 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Icon } from '@/components/ui/icon'
 import { useTranslations } from 'next-intl'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { createAvailability, removeTimeRange, assignSubjectToTimeSlot } from './actions'
+import { toast } from 'sonner'
 
 interface Teacher {
   id: string
   firstName: string
   lastName: string
   subjectsTeachers: {
+    subjectId: string
+    courseId: string
     subject: {
       id: string
       name: string
-      modules: number
-      course: {
-        id: string
-        name: string
-      }
+      coursesSubjects?: {
+        courseId: string
+        modules: number
+      }[]
+    }
+    course: {
+      id: string
+      name: string
     }
   }[]
   availabilities: {
@@ -34,7 +41,6 @@ interface Teacher {
       subject: {
         id: string
         name: string
-        modules: number
       } | null
     }[]
   }[]
@@ -42,6 +48,7 @@ interface Teacher {
 
 interface AvailabilityAssignmentProps {
   teacher: Teacher
+  onUpdate?: () => void
 }
 
 const DAYS = [
@@ -72,49 +79,87 @@ const TIME_RANGES = [
   'Módulo 17 (19:30-20:10)',
 ]
 
-export default function AvailabilityAssignment({ teacher }: AvailabilityAssignmentProps) {
+export default function AvailabilityAssignment({ teacher, onUpdate }: AvailabilityAssignmentProps) {
   const t = useTranslations('teachersPage')
+  const router = useRouter()
   const [selectedDay, setSelectedDay] = useState<string>('')
   const [selectedTimeRange, setSelectedTimeRange] = useState<string>('')
 
+  useEffect(() => {
+    setSelectedTimeRange('')
+  }, [selectedDay])
+
   const handleAddAvailability = async () => {
-    if (selectedDay && selectedTimeRange) {
-      await createAvailability(teacher.id, selectedDay as 'M' | 'T' | 'W' | 'TH' | 'F', selectedTimeRange)
-      setSelectedDay('')
-      setSelectedTimeRange('')
-    }
+  if (selectedDay && selectedTimeRange) {
+    await createAvailability(teacher.id, selectedDay as 'M' | 'T' | 'W' | 'TH' | 'F', selectedTimeRange)
+    setSelectedDay('')
+    setSelectedTimeRange('')
+    router.refresh()
+    onUpdate?.()
   }
+}
 
   const handleRemoveTimeRange = async (day: 'M' | 'T' | 'W' | 'TH' | 'F', timeRange: string) => {
     await removeTimeRange(teacher.id, day, timeRange)
+    router.refresh()
+    onUpdate?.()
   }
 
-  const handleSubjectAssign = async (day: 'M' | 'T' | 'W' | 'TH' | 'F', timeRange: string, subjectId: string | null) => {
-    await assignSubjectToTimeSlot(teacher.id, day, timeRange, subjectId)
+  const handleSubjectAssign = async (day: 'M' | 'T' | 'W' | 'TH' | 'F', timeRange: string, value: string | null) => {
+    try {
+      if (value === null) {
+        await assignSubjectToTimeSlot(teacher.id, day, timeRange, null, null)
+      } else {
+        // value format: "subjectId:courseId"
+        const [subjectId, courseId] = value.split(':')
+        await assignSubjectToTimeSlot(teacher.id, day, timeRange, subjectId, courseId)
+      }
+      toast.success('Materia asignada correctamente')
+      router.refresh()
+      onUpdate?.()
+    } catch (error: any) {
+      console.error('Error assigning subject:', error)
+      toast.error(error.message || 'Error al asignar la materia')
+    }
   }
 
   const getDayLabel = (day: string) => {
     return DAYS.find(d => d.value === day)?.label || day
   }
 
-  // Calculate required and current modules
-  const requiredModules = teacher.subjectsTeachers.reduce((sum, st) => sum + st.subject.modules, 0)
-  const currentModules = teacher.availabilities.reduce((sum, a) => 
-    sum + a.teacherAvailabilities.filter(ta => ta.subjectId).length, 0
+  const getAvailableTimeRanges = () => {
+    if (!selectedDay) return TIME_RANGES
+    
+    const dayAvailabilities = teacher.availabilities.find((a: any) => a.day === selectedDay)
+    const assignedTimeRanges = dayAvailabilities?.timeRanges || []
+    
+    return TIME_RANGES.filter(timeRange => !assignedTimeRanges.includes(timeRange))
+  }
+
+  // Calculate required modules from CourseSubject for each subject-course combination
+  const requiredModules = teacher.subjectsTeachers.reduce((sum: number, st: any) => {
+    const courseSubject = st.subject.coursesSubjects?.find((cs: any) => cs.courseId === st.courseId)
+    return sum + (courseSubject?.modules || 0)
+  }, 0)
+  
+  const currentModules = teacher.availabilities.reduce((sum: number, a: any) => 
+    sum + a.teacherAvailabilities.filter((ta: any) => ta.subjectId).length, 0
   )
   const missingModules = Math.max(0, requiredModules - currentModules)
 
-  const groupedAvailabilities = teacher.availabilities.reduce((acc, availability) => {
+  const groupedAvailabilities = teacher.availabilities.reduce((acc: any, availability: any) => {
     if (!acc[availability.day]) {
       acc[availability.day] = []
     }
-    availability.timeRanges.forEach(tr => {
+    availability.timeRanges.forEach((tr: any) => {
       if (!acc[availability.day].includes(tr)) {
         acc[availability.day].push(tr)
       }
     })
     return acc
   }, {} as Record<string, string[]>)
+
+  const subjectIds = teacher.subjectsTeachers.map((st: any) => st.subject.id)
 
   return (
     <div className="space-y-6">
@@ -136,11 +181,14 @@ export default function AvailabilityAssignment({ teacher }: AvailabilityAssignme
                 )}
               </div>
               <div className="text-xs">
-                {teacher.subjectsTeachers.map(st => (
-                  <span key={st.subject.id} className="mr-3">
-                    {st.subject.name}: {st.subject.modules} mód.
-                  </span>
-                ))}
+                {teacher.subjectsTeachers.map((st: any) => {
+                  const courseSubject = st.subject.coursesSubjects?.find((cs: any) => cs.courseId === st.courseId)
+                  return (
+                    <span key={`${st.subject.id}:${st.courseId}`} className="mr-3">
+                      {st.subject.name} ({st.course.name}): {courseSubject?.modules || 0} mód.
+                    </span>
+                  )
+                })}
               </div>
             </div>
           )}
@@ -150,38 +198,49 @@ export default function AvailabilityAssignment({ teacher }: AvailabilityAssignme
                 <div key={day} className="border rounded-lg p-4">
                   <h4 className="font-medium mb-2">{getDayLabel(day)}</h4>
                   <div className="space-y-2">
-                    {timeRanges.map((timeRange, index) => {
-                      // Find the teacher availability for this time range
-                      const dayAvailability = teacher.availabilities.find(a => a.day === day)
-                      const teacherAvail = dayAvailability?.teacherAvailabilities.find(ta => ta.timeRange === timeRange)
+                    {(timeRanges as string[]).map((timeRange: string, index: number) => {
+                      const dayAvailability = teacher.availabilities.find((a: any) => a.day === day)
+                      const teacherAvail = dayAvailability?.teacherAvailabilities.find((ta: any) => ta.timeRange === timeRange)
+                      
+                      // Find which subject-course combination is assigned
+                      const assignedST = teacherAvail?.subjectId 
+                        ? teacher.subjectsTeachers.find((st: any) => st.subject.id === teacherAvail.subjectId)
+                        : null
+                      
+                      const selectValue = assignedST
+                        ? `${assignedST.subject.id}:${assignedST.courseId}`
+                        : "none"
                       
                       return (
                         <div key={index} className="flex items-center gap-2 bg-secondary px-4 py-3 rounded-lg border-2 border-gray-200 shadow-sm">
                           <span className="text-sm font-medium flex-1">{timeRange}</span>
                           
                           <Select
-                            value={teacherAvail?.subjectId ?? ""}
+                            key={`${day}-${timeRange}`}
+                            value={selectValue}
                             onValueChange={(value) =>
                               handleSubjectAssign(
                                 day as 'M' | 'T' | 'W' | 'TH' | 'F',
                                 timeRange,
-                                value || null
+                                value === "none" ? null : value
                               )
                             }
                           >
-                            <SelectTrigger className="w-40">
+                            <SelectTrigger className="w-64">
                               <SelectValue placeholder="Sin materia" />
                             </SelectTrigger>
                             <SelectContent>
-                              {teacher.subjectsTeachers.map((st) => (
-                                <SelectItem key={st.subject.id} value={st.subject.id}>
-                                  {st.subject.name}
+                              <SelectItem value="none">
+                                Sin materia
+                              </SelectItem>
+                              {teacher.subjectsTeachers.map((st: any) => (
+                                <SelectItem key={`${st.subject.id}:${st.courseId}`} value={`${st.subject.id}:${st.courseId}`}>
+                                  {st.subject.name} - {st.course.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
 
-                          
                           <Button
                             variant="outline"
                             size="sm"
@@ -233,7 +292,7 @@ export default function AvailabilityAssignment({ teacher }: AvailabilityAssignme
                     <SelectValue placeholder={t('selectTimeRangePlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {TIME_RANGES.map((timeRange) => (
+                    {getAvailableTimeRanges().map((timeRange) => (
                       <SelectItem key={timeRange} value={timeRange}>
                         {timeRange}
                       </SelectItem>
@@ -255,4 +314,4 @@ export default function AvailabilityAssignment({ teacher }: AvailabilityAssignme
       </Card>
     </div>
   )
-} 
+}

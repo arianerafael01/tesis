@@ -12,7 +12,7 @@ const HeaderLogo = () => {
 
     return (
         config.layout === 'horizontal' ? (
-            <Link href="/dashboard/analytics" className="flex gap-2 items-center">
+            <Link href="/institutional/reports/weekly-schedule" className="flex gap-2 items-center">
                 <Image
                     src="/images/institutional-logo.png"
                     alt="Instituto Técnico Etchegoyen"
@@ -26,7 +26,7 @@ const HeaderLogo = () => {
             </Link>
         ) :
             !isDesktop && (
-                <Link href="/dashboard/analytics" className="flex gap-2 items-center">
+                <Link href="/institutional/reports/weekly-schedule" className="flex gap-2 items-center">
                     <Image
                         src="/images/institutional-logo.png"
                         alt="Instituto Técnico Etchegoyen"

@@ -12,20 +12,25 @@ import { assignSubjectToTeacher, removeSubjectFromTeacher } from './actions'
 interface Subject {
   id: string
   name: string
-  course: {
-    id: string
-    name: string
-  }
-}
-
-interface AssignedSubject {
-  subject: {
-    id: string
-    name: string
+  coursesSubjects: {
+    courseId: string
     course: {
       id: string
       name: string
     }
+  }[]
+}
+
+interface AssignedSubject {
+  subjectId: string
+  courseId: string
+  subject: {
+    id: string
+    name: string
+  }
+  course: {
+    id: string
+    name: string
   }
 }
 
@@ -44,15 +49,27 @@ interface SubjectAssignmentProps {
 export default function SubjectAssignment({ teacher, availableSubjects }: SubjectAssignmentProps) {
   const t = useTranslations('teachersPage')
 
-  const assignedSubjectIds = teacher.subjectsTeachers.map(st => st.subject.id)
-  const unassignedSubjects = availableSubjects.filter(subject => !assignedSubjectIds.includes(subject.id))
+  // Build list of assigned subject-course combinations
+  const assignedCombinations = teacher.subjectsTeachers.map(st => `${st.subjectId}:${st.courseId}`)
+  
+  // Build list of available subject-course combinations that aren't assigned yet
+  const availableCombinations = availableSubjects.flatMap(subject =>
+    subject.coursesSubjects.map(cs => ({
+      subjectId: subject.id,
+      subjectName: subject.name,
+      courseId: cs.courseId,
+      courseName: cs.course.name,
+      combinationKey: `${subject.id}:${cs.courseId}`
+    }))
+  ).filter(combo => !assignedCombinations.includes(combo.combinationKey))
 
-  const handleAssignSubject = async (subjectId: string) => {
-    await assignSubjectToTeacher(teacher.id, subjectId)
+  const handleAssignSubject = async (value: string) => {
+    const [subjectId, courseId] = value.split(':')
+    await assignSubjectToTeacher(teacher.id, subjectId, courseId)
   }
 
-  const handleRemoveSubject = async (subjectId: string) => {
-    await removeSubjectFromTeacher(teacher.id, subjectId)
+  const handleRemoveSubject = async (subjectId: string, courseId: string) => {
+    await removeSubjectFromTeacher(teacher.id, subjectId, courseId)
   }
 
   return (
@@ -74,16 +91,16 @@ export default function SubjectAssignment({ teacher, availableSubjects }: Subjec
               </TableHeader>
               <TableBody>
                 {teacher.subjectsTeachers.map((st) => (
-                  <TableRow key={st.subject.id}>
+                  <TableRow key={`${st.subjectId}:${st.courseId}`}>
                     <TableCell className="font-medium">{st.subject.name}</TableCell>
                     <TableCell>
-                      <Badge color="secondary">{st.subject.course.name}</Badge>
+                      <Badge color="secondary">{st.course.name}</Badge>
                     </TableCell>
                     <TableCell>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleRemoveSubject(st.subject.id)}
+                        onClick={() => handleRemoveSubject(st.subjectId, st.courseId)}
                       >
                         <Icon icon="heroicons-outline:minus" className="h-4 w-4" />
                         {t('removeSubject')}
@@ -105,16 +122,16 @@ export default function SubjectAssignment({ teacher, availableSubjects }: Subjec
           <CardTitle>{t('availableSubjects')}</CardTitle>
         </CardHeader>
         <CardContent>
-          {unassignedSubjects.length > 0 ? (
+          {availableCombinations.length > 0 ? (
             <div className="space-y-4">
               <Select onValueChange={handleAssignSubject}>
                 <SelectTrigger className="w-full max-w-md">
                   <SelectValue placeholder={t('selectSubjectToAssign')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {unassignedSubjects.map((subject) => (
-                    <SelectItem key={subject.id} value={subject.id}>
-                      {subject.name} - {subject.course.name}
+                  {availableCombinations.map((combo) => (
+                    <SelectItem key={combo.combinationKey} value={combo.combinationKey}>
+                      {combo.subjectName} - {combo.courseName}
                     </SelectItem>
                   ))}
                 </SelectContent>

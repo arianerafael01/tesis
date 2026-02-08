@@ -37,8 +37,21 @@ export default async function TeachersPage() {
       subjectsTeachers: {
         include: {
           subject: {
-            include: {
-              course: true
+            select: {
+              id: true,
+              name: true,
+              coursesSubjects: {
+                select: {
+                  courseId: true,
+                  modules: true
+                }
+              }
+            }
+          },
+          course: {
+            select: {
+              id: true,
+              name: true
             }
           }
         }
@@ -47,7 +60,12 @@ export default async function TeachersPage() {
         include: {
           teacherAvailabilities: {
             include: {
-              subject: true
+              subject: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              }
             }
           }
         }
@@ -60,7 +78,16 @@ export default async function TeachersPage() {
 
   const availableSubjects = await prisma.subject.findMany({
     include: {
-      course: true
+      coursesSubjects: {
+        include: {
+          course: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
+      }
     },
     orderBy: {
       name: 'asc'

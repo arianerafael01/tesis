@@ -295,6 +295,8 @@
     "deleteTeacherConfirm": "¿Estás seguro de que quieres eliminar al profesor \"{name}\"?",
     "deleteTeacherWarning": "Esta acción no se puede deshacer.",
     "updateTeacher": "Actualizar Profesor",
+    "personalData": "Datos Personales",
+    "availability": "Disponibilidad",
     "assignedSubjects": "Materias Asignadas",
     "availableSubjects": "Materias Disponibles",
     "assignSubject": "Asignar Materia",
@@ -336,7 +338,9 @@
     "updateSubject": "Actualizar Materia",
     "selectCourse": "Seleccionar curso",
     "modules": "Módulos",
-    "more": "más"
+    "more": "más",
+    "noCourseSelected": "Seleccione al menos un curso",
+    "cancel": "Cancelar"
   },
   "coursesPage": {
     "title": "Cursos",
@@ -388,7 +392,10 @@
     "hoursAvailable": "horas disponibles",
     "subjectsAssigned": "materias asignadas",
     "available": "Disponible",
-    "noTeachersFound": "No se encontraron profesores con disponibilidad configurada."
+    "noTeachersFound": "No se encontraron profesores con disponibilidad configurada.",
+    "unassignAll": "Desasignar Todas las Materias",
+    "autoAssign": "Asignar Materias Automáticamente",
+    "assigning": "Asignando..."
   },
   "products": {
     "title": "Products",

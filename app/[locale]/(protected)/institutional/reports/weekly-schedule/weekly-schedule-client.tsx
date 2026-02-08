@@ -7,23 +7,33 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { Icon } from '@/components/ui/icon'
 import { useTranslations } from 'next-intl'
+import { useRouter } from '@/components/navigation'
+import { assignSubjectToTimeSlot } from '../../teachers/actions'
+import { autoAssignAllTeachers, unassignAllSubjects } from './actions'
+import { toast } from 'sonner'
 
 interface Teacher {
   id: string
   firstName: string
   lastName: string
   subjectsTeachers: {
+    subjectId: string
+    courseId: string
     subject: {
       id: string
       name: string
-      course: {
+      coursesSubjects?: {
+        courseId: string
+        modules: number
+      }[]
+    }
+    course: {
+      id: string
+      name: string
+      shift: string
+      classroom: {
         id: string
         name: string
-        shift: string
-        classroom: {
-          id: string
-          name: string
-        }
       }
     }
   }[]
@@ -31,6 +41,23 @@ interface Teacher {
     id: string
     day: 'M' | 'T' | 'W' | 'TH' | 'F'
     timeRanges: string[]
+    teacherAvailabilities: {
+      id: string
+      timeRange: string
+      subjectId: string | null
+      subject: {
+        id: string
+        name: string
+      } | null
+      course: {
+        id: string
+        name: string
+        classroom: {
+          id: string
+          name: string
+        }
+      } | null
+    }[]
   }[]
 }
 
@@ -68,8 +95,10 @@ function getDayLabel(day: string) {
 
 export default function WeeklyScheduleClient({ teachers }: { teachers: Teacher[] }) {
   const t = useTranslations('weeklySchedulePage')
+  const router = useRouter()
   const printRef = useRef<HTMLDivElement>(null)
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('all')
+  const [isAutoAssigning, setIsAutoAssigning] = useState(false)
 
   const handlePrint = () => {
     if (!printRef.current) return
@@ -120,41 +149,28 @@ export default function WeeklyScheduleClient({ teachers }: { teachers: Teacher[]
 
   // Build schedule data per teacher
   const getTeacherSchedule = (teacher: Teacher) => {
-    const schedule: Record<string, Record<string, { available: boolean; subjects: { name: string; course: string; classroom: string }[] }>> = {}
+    const schedule: Record<string, Record<string, { available: boolean; subject: { name: string; course: string; classroom: string } | null }>> = {}
 
     for (const day of DAYS) {
       schedule[day.value] = {}
       for (const slot of TIME_SLOTS) {
-        schedule[day.value][slot] = { available: false, subjects: [] }
+        schedule[day.value][slot] = { available: false, subject: null }
       }
     }
 
-    // Mark available slots
+    // Mark available slots and assigned subjects
     for (const avail of teacher.availabilities) {
       for (const timeRange of avail.timeRanges) {
         if (schedule[avail.day]?.[timeRange]) {
           schedule[avail.day][timeRange].available = true
-        }
-      }
-    }
-
-    // Add subject info to available slots
-    for (const st of teacher.subjectsTeachers) {
-      const subjectInfo = {
-        name: st.subject.name,
-        course: st.subject.course.name,
-        classroom: st.subject.course.classroom?.name || '-',
-      }
-      // Attach subject info to all available slots (since we don't have a specific schedule assignment yet)
-      for (const avail of teacher.availabilities) {
-        for (const timeRange of avail.timeRanges) {
-          if (schedule[avail.day]?.[timeRange]) {
-            // Only add if not already there
-            const exists = schedule[avail.day][timeRange].subjects.some(
-              s => s.name === subjectInfo.name && s.course === subjectInfo.course
-            )
-            if (!exists) {
-              schedule[avail.day][timeRange].subjects.push(subjectInfo)
+          
+          // Check if there's a subject assigned to this specific time slot
+          const teacherAvail = avail.teacherAvailabilities.find(ta => ta.timeRange === timeRange)
+          if (teacherAvail?.subject && teacherAvail?.course) {
+            schedule[avail.day][timeRange].subject = {
+              name: teacherAvail.subject.name,
+              course: teacherAvail.course.name,
+              classroom: teacherAvail.course.classroom?.name || '-',
             }
           }
         }
@@ -168,6 +184,82 @@ export default function WeeklyScheduleClient({ teachers }: { teachers: Teacher[]
     return teacher.availabilities.reduce((total, a) => total + a.timeRanges.length, 0)
   }
 
+  // Helper function to count assigned modules per subject-course combination
+  const getAssignedModulesCount = (teacher: Teacher, subjectId: string, courseId: string) => {
+    let count = 0
+    for (const avail of teacher.availabilities) {
+      for (const ta of avail.teacherAvailabilities) {
+        if (ta.subjectId === subjectId && ta.course?.id === courseId) {
+          count++
+        }
+      }
+    }
+    return count
+  }
+
+  // Helper function to get required modules for a subject-course combination
+  const getRequiredModules = (teacher: Teacher, subjectId: string, courseId: string) => {
+    const st = teacher.subjectsTeachers.find(st => st.subjectId === subjectId && st.courseId === courseId)
+    if (!st) return 0
+    
+    // Find the modules from coursesSubjects
+    const courseSubject = st.subject.coursesSubjects?.find((cs: any) => cs.courseId === courseId)
+    return courseSubject?.modules || 0
+  }
+
+  const handleSubjectAssign = async (teacherId: string, day: 'M' | 'T' | 'W' | 'TH' | 'F', timeRange: string, value: string | null) => {
+    try {
+      let subjectId: string | null = null
+      let courseId: string | null = null
+      
+      if (value && value !== 'none') {
+        const [sid, cid] = value.split(':')
+        subjectId = sid
+        courseId = cid
+      }
+      
+      await assignSubjectToTimeSlot(teacherId, day, timeRange, subjectId, courseId)
+      toast.success('Materia asignada correctamente')
+      router.refresh()
+    } catch (error: any) {
+      console.error('Error assigning subject:', error)
+      toast.error(error.message || 'Error al asignar la materia')
+    }
+  }
+
+  const handleAutoAssignAll = async () => {
+    setIsAutoAssigning(true)
+    try {
+      const result = await autoAssignAllTeachers()
+      toast.success(result.message)
+      router.refresh()
+    } catch (error: any) {
+      console.error('Error auto-assigning subjects:', error)
+      toast.error(error.message || 'Error al asignar materias automáticamente')
+    } finally {
+      setIsAutoAssigning(false)
+    }
+  }
+
+  const handleUnassignAll = async () => {
+    if (!confirm('¿Estás seguro de que quieres desasignar todas las materias de todos los profesores? Esta acción no se puede deshacer.')) {
+      return
+    }
+    
+    try {
+      const result = await unassignAllSubjects()
+      if (result.success) {
+        toast.success(result.message)
+      } else {
+        toast.error(result.message)
+      }
+      router.refresh()
+    } catch (error: any) {
+      console.error('Error unassigning subjects:', error)
+      toast.error(error.message || 'Error al desasignar materias')
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -177,6 +269,23 @@ export default function WeeklyScheduleClient({ teachers }: { teachers: Teacher[]
           <p className="text-muted-foreground">{t('description')}</p>
         </div>
         <div className="flex items-center gap-3">
+          <Button
+            onClick={handleUnassignAll}
+            variant="destructive"
+            className="gap-2"
+          >
+            <Icon icon="heroicons:x-circle" className="h-4 w-4" />
+            {t('unassignAll')}
+          </Button>
+          <Button
+            onClick={handleAutoAssignAll}
+            disabled={isAutoAssigning}
+            variant="default"
+            className="gap-2"
+          >
+            <Icon icon="heroicons:sparkles" className="h-4 w-4" />
+            {isAutoAssigning ? t('assigning') : t('autoAssign')}
+          </Button>
           <Select value={selectedTeacherId} onValueChange={setSelectedTeacherId}>
             <SelectTrigger className="w-[280px]">
               <SelectValue placeholder={t('selectTeacher')} />
@@ -233,38 +342,90 @@ export default function WeeklyScheduleClient({ teachers }: { teachers: Teacher[]
                     </tr>
                   </thead>
                   <tbody>
-                    {TIME_SLOTS.map((slot) => (
+                    {TIME_SLOTS.filter(slot => 
+                      DAYS.some(day => {
+                        const cell = schedule[day.value][slot]
+                        return cell.available || cell.subject
+                      })
+                    ).map((slot) => (
                       <tr key={slot}>
                         <td className="border border-default-200 bg-default-50 p-2 font-medium text-xs">
                           {slot}
                         </td>
                         {DAYS.map((day) => {
                           const cell = schedule[day.value][slot]
+                          const dayAvailability = teacher.availabilities.find(a => a.day === day.value)
+                          const teacherAvail = dayAvailability?.teacherAvailabilities.find(ta => ta.timeRange === slot)
+                          const currentSubjectId = teacherAvail?.subjectId
+                          const currentCourseId = teacherAvail?.course?.id
+                          
+                          // Find the assigned subject-course combination using both subjectId and courseId
+                          let selectValue = "none"
+                          if (currentSubjectId && currentCourseId) {
+                            const assignedST = teacher.subjectsTeachers.find(
+                              st => st.subjectId === currentSubjectId && st.courseId === currentCourseId
+                            )
+                            if (assignedST) {
+                              selectValue = `${assignedST.subjectId}:${assignedST.courseId}`
+                            }
+                          }
+                          
                           return (
                             <td
                               key={day.value}
                               className={`border border-default-200 p-1.5 text-center align-top min-w-[140px] ${
-                                cell.subjects.length > 0
+                                cell.subject
                                   ? 'bg-blue-50 dark:bg-blue-950/30'
                                   : cell.available
                                   ? 'bg-green-50 dark:bg-green-950/30'
                                   : ''
                               }`}
                             >
-                              {cell.subjects.length > 0 ? (
-                                <div className="space-y-1">
-                                  {cell.subjects.map((s, i) => (
-                                    <div key={i} className="text-xs">
-                                      <div className="font-semibold text-blue-700 dark:text-blue-300">{s.name}</div>
-                                      <div className="text-default-500">{s.course}</div>
-                                      <div className="text-default-400 text-[10px]">{s.classroom}</div>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : cell.available ? (
-                                <span className="text-green-600 dark:text-green-400 text-xs font-medium">
-                                  {t('available')}
-                                </span>
+                              {cell.available ? (
+                                <Select
+                                  key={`${teacher.id}-${day.value}-${slot}`}
+                                  value={selectValue}
+                                  onValueChange={(value) =>
+                                    handleSubjectAssign(
+                                      teacher.id,
+                                      day.value as 'M' | 'T' | 'W' | 'TH' | 'F',
+                                      slot,
+                                      value === "none" ? null : value
+                                    )
+                                  }
+                                >
+                                  <SelectTrigger className="w-full h-auto min-h-[60px] text-xs">
+                                    <SelectValue placeholder="Sin materia" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="none">Sin materia</SelectItem>
+                                    {teacher.subjectsTeachers
+                                      .filter((st) => {
+                                        // Always include the currently assigned subject-course combination
+                                        const isCurrentlyAssigned = currentSubjectId === st.subjectId && currentCourseId === st.courseId
+                                        if (isCurrentlyAssigned) return true
+                                        
+                                        // Filter out subject-course combinations that have all modules assigned
+                                        const assignedCount = getAssignedModulesCount(teacher, st.subjectId, st.courseId)
+                                        const requiredCount = getRequiredModules(teacher, st.subjectId, st.courseId)
+                                        return assignedCount < requiredCount
+                                      })
+                                      .map((st) => {
+                                        const assignedCount = getAssignedModulesCount(teacher, st.subjectId, st.courseId)
+                                        const requiredCount = getRequiredModules(teacher, st.subjectId, st.courseId)
+                                        return (
+                                          <SelectItem key={`${st.subjectId}-${st.courseId}`} value={`${st.subjectId}:${st.courseId}`}>
+                                            <div className="text-left">
+                                              <div className="font-semibold">{st.subject.name}</div>
+                                              <div className="text-[10px] text-muted-foreground">
+                                                {st.course.name} ({assignedCount}/{requiredCount} mód.)
+                                              </div>
+                                            </div>
+                                          </SelectItem>
+                                        )
+                                      })}
+                                  </SelectContent>
+                                </Select>
                               ) : null}
                             </td>
                           )
@@ -313,7 +474,12 @@ export default function WeeklyScheduleClient({ teachers }: { teachers: Teacher[]
                     </tr>
                   </thead>
                   <tbody>
-                    {TIME_SLOTS.map((slot) => (
+                    {TIME_SLOTS.filter(slot => 
+                      DAYS.some(day => {
+                        const cell = schedule[day.value][slot]
+                        return cell.available || cell.subject
+                      })
+                    ).map((slot) => (
                       <tr key={slot}>
                         <td className="time-col">{slot}</td>
                         {DAYS.map((day) => {
@@ -322,24 +488,22 @@ export default function WeeklyScheduleClient({ teachers }: { teachers: Teacher[]
                             <td
                               key={day.value}
                               className={
-                                cell.subjects.length > 0
+                                cell.subject
                                   ? 'subject-cell'
                                   : cell.available
                                   ? 'available'
                                   : ''
                               }
                             >
-                              {cell.subjects.length > 0
-                                ? cell.subjects.map((s, i) => (
-                                    <div key={i}>
-                                      <span className="subject-name">{s.name}</span>
-                                      <br />
-                                      <span className="course-name">{s.course} - {s.classroom}</span>
-                                    </div>
-                                  ))
-                                : cell.available
-                                ? '✓'
-                                : ''}
+                              {cell.subject ? (
+                                <div>
+                                  <span className="subject-name">{cell.subject.name}</span>
+                                  <br />
+                                  <span className="course-name">{cell.subject.course} - {cell.subject.classroom}</span>
+                                </div>
+                              ) : cell.available ? (
+                                '✓'
+                              ) : ''}
                             </td>
                           )
                         })}

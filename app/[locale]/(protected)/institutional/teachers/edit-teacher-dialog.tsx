@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Icon } from '@/components/ui/icon'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
+import { useRouter } from '@/components/navigation'
 import { updateTeacher } from './actions'
 import SubjectAssignment from './subject-assignment'
 import AvailabilityAssignment from './availability-assignment'
@@ -23,14 +25,15 @@ interface Teacher {
   neighborhood: string
   createdAt: Date
   subjectsTeachers: {
+    subjectId: string
+    courseId: string
     subject: {
       id: string
       name: string
-      modules: number
-      course: {
-        id: string
-        name: string
-      }
+    }
+    course: {
+      id: string
+      name: string
     }
   }[]
   availabilities: {
@@ -44,7 +47,6 @@ interface Teacher {
       subject: {
         id: string
         name: string
-        modules: number
       } | null
     }[]
   }[]
@@ -62,10 +64,12 @@ interface Subject {
 export default function EditTeacherDialog({ teacher, availableSubjects }: { teacher: Teacher, availableSubjects: Subject[] }) {
   const t = useTranslations('teachersPage')
   const [open, setOpen] = useState(false)
+  const router = useRouter()
 
   const handleSubmit = async (formData: FormData) => {
     await updateTeacher(teacher.id, formData)
     setOpen(false)
+    router.refresh()
   }
 
   return (
@@ -75,12 +79,30 @@ export default function EditTeacherDialog({ teacher, availableSubjects }: { teac
           <Icon icon="heroicons-outline:pencil" className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-              <DialogContent className="w-[98vw] max-w-[2000px] max-h-[95vh] overflow-y-auto p-8">
+      <DialogContent className="max-w-[90vw] w-full p-8 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('editTeacher')}</DialogTitle>
         </DialogHeader>
-                <form action={handleSubmit}>
-          <div className="grid gap-6 py-4">
+        
+        <Tabs defaultValue="personal" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="personal">
+              <Icon icon="heroicons:user" className="h-4 w-4 mr-2" />
+              {t('personalData')}
+            </TabsTrigger>
+            <TabsTrigger value="subjects">
+              <Icon icon="heroicons:book-open" className="h-4 w-4 mr-2" />
+              {t('subjects')}
+            </TabsTrigger>
+            <TabsTrigger value="availability">
+              <Icon icon="heroicons:calendar" className="h-4 w-4 mr-2" />
+              {t('availability')}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="personal" className="mt-6">
+            <form action={handleSubmit}>
+              <div className="grid gap-6 py-4">
             {/* Name Fields */}
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -204,21 +226,26 @@ export default function EditTeacherDialog({ teacher, availableSubjects }: { teac
                 required
               />
             </div>
-          </div>
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="submit">{t('updateTeacher')}</Button>
-          </div>
-        </form>
+              </div>
+              <div className="flex justify-end gap-2 pt-4">
+                <Button type="submit">{t('updateTeacher')}</Button>
+              </div>
+            </form>
+          </TabsContent>
 
-        {/* Subject Assignment Section */}
-        <div className="mt-8 border-t pt-6">
-          <SubjectAssignment teacher={teacher} availableSubjects={availableSubjects} />
-        </div>
+          <TabsContent value="subjects" className="mt-6">
+            <SubjectAssignment teacher={teacher} availableSubjects={availableSubjects} />
+          </TabsContent>
 
-        {/* Availability Assignment Section */}
-        <div className="mt-8 border-t pt-6">
-          <AvailabilityAssignment teacher={teacher} />
-        </div>
+          <TabsContent value="availability" className="mt-6">
+            <AvailabilityAssignment 
+              teacher={teacher} 
+              onUpdate={() => {
+                router.refresh()
+              }}
+            />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   )

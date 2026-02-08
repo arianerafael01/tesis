@@ -10,14 +10,27 @@ import DeleteSubjectDialog from './delete-subject-dialog'
 interface Subject {
   id: string
   name: string
-  modules: number
-  courseId: string
   createdAt: Date
-  course: {
-    id: string
-    name: string
-  }
-  subjectsTeachers: any[]
+  coursesSubjects: {
+    courseId: string
+    modules: number
+    course: {
+      id: string
+      name: string
+    }
+  }[]
+  subjectsTeachers: {
+    courseId: string
+    teacher: {
+      id: string
+      firstName: string
+      lastName: string
+    }
+    course: {
+      id: string
+      name: string
+    }
+  }[]
 }
 
 interface Course {
@@ -38,8 +51,7 @@ export default function SubjectsTable({ subjects, courses }: { subjects: Subject
           <TableHeader>
             <TableRow>
               <TableHead>{t('name')}</TableHead>
-              <TableHead>{t('course')}</TableHead>
-              <TableHead>{t('modules')}</TableHead>
+              <TableHead>{t('courses')}</TableHead>
               <TableHead>{t('teachers')}</TableHead>
               <TableHead>{t('actions')}</TableHead>
             </TableRow>
@@ -49,21 +61,24 @@ export default function SubjectsTable({ subjects, courses }: { subjects: Subject
               <TableRow key={subject.id}>
                 <TableCell className="font-medium">{subject.name}</TableCell>
                 <TableCell>
-                  <Badge color="secondary">{subject.course.name}</Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge color="default">{subject.modules}</Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-1">
-                    {subject.subjectsTeachers.slice(0, 2).map((st: any) => (
-                      <Badge key={st.teacher.id} color="info" className="text-xs">
-                        {st.teacher.firstName} {st.teacher.lastName}
+                  <div className="flex flex-wrap gap-1">
+                    {subject.coursesSubjects.map((cs) => (
+                      <Badge key={cs.courseId} color="secondary" className="text-xs">
+                        {cs.course.name} ({cs.modules} mód.)
                       </Badge>
                     ))}
-                    {subject.subjectsTeachers.length > 2 && (
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-1">
+                    {subject.subjectsTeachers.slice(0, 3).map((st, idx) => (
+                      <Badge key={`${st.teacher.id}-${st.courseId}`} color="info" className="text-xs">
+                        {st.teacher.firstName} {st.teacher.lastName} ({st.course.name})
+                      </Badge>
+                    ))}
+                    {subject.subjectsTeachers.length > 3 && (
                       <Badge color="default" className="text-xs">
-                        +{subject.subjectsTeachers.length - 2} {t('more')}
+                        +{subject.subjectsTeachers.length - 3}
                       </Badge>
                     )}
                   </div>

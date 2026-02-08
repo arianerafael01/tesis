@@ -1,4 +1,6 @@
 
+"use client"
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,16 +15,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon"
-import { signOut, auth } from "@/lib/auth";
+import { logout } from "@/app/actions/auth";
 import Image from "next/image";
 import { Link } from '@/i18n/routing';
+import { useSession } from "next-auth/react";
 
-const ProfileInfo = async () => {
-  const session = await auth();
+const ProfileInfo = () => {
+  const { data: session } = useSession();
   return (
     <div className="md:block hidden">
       <DropdownMenu>
-        <DropdownMenuTrigger asChild className=" cursor-pointer" disabled>
+        <DropdownMenuTrigger asChild className=" cursor-pointer">
           <div className=" flex items-center gap-3  text-default-800 ">
 
             <Image
@@ -174,24 +177,12 @@ const ProfileInfo = async () => {
             </DropdownMenuSub>
           </DropdownMenuGroup>
           <DropdownMenuSeparator className="mb-0 dark:bg-background" />
-          <DropdownMenuItem
-
+          <DropdownMenuItem 
+            onClick={() => logout()}
             className="flex items-center gap-2 text-sm font-medium text-default-600 capitalize my-1 px-3 cursor-pointer"
           >
-
-            <div>
-              <form
-                action={async () => {
-                  "use server";
-                  await signOut();
-                }}
-              >
-                <button type="submit" className=" w-full  flex  items-center gap-2" >
-                  <Icon icon="heroicons:power" className="w-4 h-4" />
-                  Log out
-                </button>
-              </form>
-            </div>
+            <Icon icon="heroicons:power" className="w-4 h-4" />
+            Log out
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

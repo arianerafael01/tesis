@@ -5,22 +5,41 @@ import SubjectsTable from './subjects-table'
 interface Subject {
   id: string
   name: string
-  courseId: string
   createdAt: Date
-  course: {
-    id: string
-    name: string
-  }
-  subjectsTeachers: any[]
+  coursesSubjects: {
+    courseId: string
+    modules: number
+    course: {
+      id: string
+      name: string
+    }
+  }[]
+  subjectsTeachers: {
+    courseId: string
+    teacher: {
+      id: string
+      firstName: string
+      lastName: string
+    }
+    course: {
+      id: string
+      name: string
+    }
+  }[]
 }
 
 export default async function SubjectsPage() {
   const subjects = await prisma.subject.findMany({
     include: {
-      course: true,
+      coursesSubjects: {
+        include: {
+          course: true
+        }
+      },
       subjectsTeachers: {
         include: {
-          teacher: true
+          teacher: true,
+          course: true
         }
       }
     },

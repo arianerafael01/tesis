@@ -7,17 +7,50 @@ export default async function WeeklySchedulePage() {
       subjectsTeachers: {
         include: {
           subject: {
+            select: {
+              id: true,
+              name: true,
+              coursesSubjects: {
+                select: {
+                  courseId: true,
+                  modules: true
+                }
+              }
+            }
+          },
+          course: {
             include: {
+              classroom: true
+            }
+          }
+        }
+      },
+      availabilities: {
+        include: {
+          teacherAvailabilities: {
+            include: {
+              subject: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              },
               course: {
-                include: {
-                  classroom: true
+                select: {
+                  id: true,
+                  name: true,
+                  classroom: {
+                    select: {
+                      id: true,
+                      name: true
+                    }
+                  }
                 }
               }
             }
           }
         }
-      },
-      availabilities: true
+      }
     },
     orderBy: {
       lastName: 'asc'

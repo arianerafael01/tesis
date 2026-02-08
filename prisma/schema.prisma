@@ -73,32 +73,49 @@ model Teacher {
 model Subject {
   id        String   @id @default(uuid())
   name      String   @db.VarChar(40)
-  modules   Int      @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  courseId          String
-  course            Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  subjectsTeachers  SubjectsTeacher[]
+  coursesSubjects       CourseSubject[]
+  subjectsTeachers      SubjectsTeacher[]
   teacherAvailabilities TeacherAvailability[]
 
   @@map("subjects")
 }
 
-// SubjectsTeachers junction table
+// CourseSubject junction table - links subjects to courses with specific module counts
+model CourseSubject {
+  id        String   @id @default(uuid())
+  courseId  String
+  subjectId String
+  modules   Int      @default(1) // Module count specific to this course
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, subjectId])
+  @@map("courses_subjects")
+}
+
+// SubjectsTeachers junction table - now includes courseId to specify which course the teacher teaches
 model SubjectsTeacher {
   id        String   @id @default(uuid())
   teacherId String
   subjectId String
+  courseId  String   // Which course this teacher teaches for this subject
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
   teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
-  @@unique([teacherId, subjectId])
+  @@unique([teacherId, subjectId, courseId])
   @@map("subjects_teachers")
 }
 
@@ -126,9 +143,11 @@ model Course {
   updatedAt    DateTime @updatedAt
 
   // Relations
-  classRoomId String
-  classroom   Classroom @relation(fields: [classRoomId], references: [id], onDelete: Cascade)
-  subjects    Subject[]
+  classRoomId           String
+  classroom             Classroom             @relation(fields: [classRoomId], references: [id], onDelete: Cascade)
+  coursesSubjects       CourseSubject[]
+  subjectsTeachers      SubjectsTeacher[]
+  teacherAvailabilities TeacherAvailability[]
 
   @@map("courses")
 }
@@ -156,12 +175,14 @@ model TeacherAvailability {
   availabilityId String
   timeRange    String   // Specific time slot (e.g., "Módulo 1 (7:30-8:10)")
   subjectId    String?
+  courseId     String?  // Course ID to track which course this subject assignment is for
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   // Relations
   availability Availability @relation(fields: [availabilityId], references: [id], onDelete: Cascade)
   subject      Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  course       Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
 
   @@unique([availabilityId, timeRange])
   @@map("teacher_availabilities")

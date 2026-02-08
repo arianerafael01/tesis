@@ -106,8 +106,8 @@ export default function TeachersTable({ teachers, availableSubjects }: { teacher
                 <TableCell>
                   <div className="flex gap-1">
                     {teacher.subjectsTeachers.slice(0, 2).map((st) => (
-                      <Badge key={st.subject.id} color="default" className="text-xs">
-                        {st.subject.name}
+                      <Badge key={`${st.subjectId}-${st.courseId}`} color="default" className="text-xs">
+                        {st.subject.name} ({st.course.name})
                       </Badge>
                     ))}
                     {teacher.subjectsTeachers.length > 2 && (

@@ -66,43 +66,103 @@ async function main() {
 
   console.log('✅ Courses created')
 
-  // Create sample subjects
+  // Create sample subjects (without course relation)
   const subject1 = await prisma.subject.create({
     data: {
       name: 'Matemáticas',
-      courseId: course1.id,
     },
   })
 
   const subject2 = await prisma.subject.create({
     data: {
       name: 'Historia',
-      courseId: course1.id,
     },
   })
 
   const subject3 = await prisma.subject.create({
     data: {
       name: 'Física',
-      courseId: course2.id,
     },
   })
 
   const subject4 = await prisma.subject.create({
     data: {
       name: 'Química',
-      courseId: course2.id,
     },
   })
 
   const subject5 = await prisma.subject.create({
     data: {
       name: 'Literatura',
-      courseId: course3.id,
+    },
+  })
+
+  const subject6 = await prisma.subject.create({
+    data: {
+      name: 'Música',
     },
   })
 
   console.log('✅ Subjects created')
+
+  // Create CourseSubject relationships with specific module counts
+  await prisma.courseSubject.create({
+    data: {
+      courseId: course1.id,
+      subjectId: subject1.id,
+      modules: 5, // Matemáticas - 1er Año: 5 módulos
+    },
+  })
+
+  await prisma.courseSubject.create({
+    data: {
+      courseId: course1.id,
+      subjectId: subject2.id,
+      modules: 3, // Historia - 1er Año: 3 módulos
+    },
+  })
+
+  await prisma.courseSubject.create({
+    data: {
+      courseId: course1.id,
+      subjectId: subject6.id,
+      modules: 2, // Música - 1er Año: 2 módulos
+    },
+  })
+
+  await prisma.courseSubject.create({
+    data: {
+      courseId: course2.id,
+      subjectId: subject1.id,
+      modules: 4, // Matemáticas - 2do Año: 4 módulos (misma materia, diferente curso)
+    },
+  })
+
+  await prisma.courseSubject.create({
+    data: {
+      courseId: course2.id,
+      subjectId: subject3.id,
+      modules: 4, // Física - 2do Año: 4 módulos
+    },
+  })
+
+  await prisma.courseSubject.create({
+    data: {
+      courseId: course2.id,
+      subjectId: subject4.id,
+      modules: 3, // Química - 2do Año: 3 módulos
+    },
+  })
+
+  await prisma.courseSubject.create({
+    data: {
+      courseId: course3.id,
+      subjectId: subject5.id,
+      modules: 5, // Literatura - 3er Año: 5 módulos
+    },
+  })
+
+  console.log('✅ Course-Subject relationships created')
 
   // Create sample teachers
   const teacher1 = await prisma.teacher.create({
@@ -146,11 +206,12 @@ async function main() {
 
   console.log('✅ Teachers created')
 
-  // Create teacher-subject relationships
+  // Create teacher-subject-course relationships
   await prisma.subjectsTeacher.create({
     data: {
       teacherId: teacher1.id,
       subjectId: subject1.id,
+      courseId: course1.id, // Juan teaches Matemáticas to 1er Año (5 modules)
     },
   })
 
@@ -158,6 +219,7 @@ async function main() {
     data: {
       teacherId: teacher1.id,
       subjectId: subject3.id,
+      courseId: course2.id, // Juan teaches Física to 2do Año (4 modules)
     },
   })
 
@@ -165,6 +227,7 @@ async function main() {
     data: {
       teacherId: teacher2.id,
       subjectId: subject2.id,
+      courseId: course1.id, // María teaches Historia to 1er Año (3 modules)
     },
   })
 
@@ -172,6 +235,15 @@ async function main() {
     data: {
       teacherId: teacher2.id,
       subjectId: subject4.id,
+      courseId: course2.id, // María teaches Química to 2do Año (3 modules)
+    },
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacher2.id,
+      subjectId: subject6.id,
+      courseId: course1.id, // María teaches Música to 1er Año (2 modules)
     },
   })
 
@@ -179,10 +251,19 @@ async function main() {
     data: {
       teacherId: teacher3.id,
       subjectId: subject5.id,
+      courseId: course3.id, // Carlos teaches Literatura to 3er Año (5 modules)
     },
   })
 
-  console.log('✅ Teacher-Subject relationships created')
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacher3.id,
+      subjectId: subject1.id,
+      courseId: course2.id, // Carlos also teaches Matemáticas to 2do Año (4 modules)
+    },
+  })
+
+  console.log('✅ Teacher-Subject-Course relationships created')
 
   console.log('🎉 Database seeded successfully!')
 }
