@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Icon } from '@/components/ui/icon'
 import { useTranslations } from 'next-intl'
+import { useState } from 'react'
 import { updateClassroom } from './actions'
 
 interface Classroom {
@@ -19,8 +20,15 @@ interface Classroom {
 
 export default function EditClassroomDialog({ classroom }: { classroom: Classroom }) {
   const t = useTranslations('classroomsPage')
+  const [open, setOpen] = useState(false)
+
+  const handleSubmit = async (formData: FormData) => {
+    await updateClassroom(classroom.id, formData)
+    setOpen(false)
+  }
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Icon icon="heroicons-outline:pencil" className="h-4 w-4" />
@@ -30,7 +38,7 @@ export default function EditClassroomDialog({ classroom }: { classroom: Classroo
         <DialogHeader>
           <DialogTitle>{t('editClassroom')}</DialogTitle>
         </DialogHeader>
-        <form action={(formData) => updateClassroom(classroom.id, formData)}>
+        <form action={handleSubmit}>
           <div className="grid gap-6 py-4">
             <div className="space-y-2">
               <Label htmlFor="name" className="text-sm font-medium">

@@ -81,6 +81,7 @@ model Subject {
   courseId          String
   course            Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   subjectsTeachers  SubjectsTeacher[]
+  teacherAvailabilities TeacherAvailability[]
 
   @@map("subjects")
 }
@@ -143,6 +144,25 @@ model Availability {
 
   // Relations
   teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  teacherAvailabilities TeacherAvailability[]
 
+  @@unique([teacherId, day])
   @@map("availabilities")
+}
+
+// TeacherAvailability table - links specific time slots to subjects
+model TeacherAvailability {
+  id           String   @id @default(uuid())
+  availabilityId String
+  timeRange    String   // Specific time slot (e.g., "Módulo 1 (7:30-8:10)")
+  subjectId    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  availability Availability @relation(fields: [availabilityId], references: [id], onDelete: Cascade)
+  subject      Subject? @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+
+  @@unique([availabilityId, timeRange])
+  @@map("teacher_availabilities")
 }

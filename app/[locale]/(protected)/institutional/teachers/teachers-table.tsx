@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { useTranslations } from 'next-intl'
+import { useMemo, useState } from 'react'
 import EditTeacherDialog from './edit-teacher-dialog'
 import DeleteTeacherDialog from './delete-teacher-dialog'
 
@@ -32,6 +33,16 @@ interface Teacher {
     id: string
     day: 'M' | 'T' | 'W' | 'TH' | 'F'
     timeRanges: string[]
+    teacherAvailabilities: {
+      id: string
+      timeRange: string
+      subjectId: string | null
+      subject: {
+        id: string
+        name: string
+        modules: number
+      } | null
+    }[]
   }[]
 }
 
@@ -46,6 +57,16 @@ interface Subject {
 
 export default function TeachersTable({ teachers, availableSubjects }: { teachers: Teacher[], availableSubjects: Subject[] }) {
   const t = useTranslations('teachersPage')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null)
+
+  const sortedTeachers = useMemo(() => {
+    if (!sortOrder) return teachers
+    return [...teachers].sort((a, b) => {
+      const nameA = `${a.lastName} ${a.firstName}`.toLowerCase()
+      const nameB = `${b.lastName} ${b.firstName}`.toLowerCase()
+      return sortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA)
+    })
+  }, [teachers, sortOrder])
 
   return (
     <Card>
@@ -56,7 +77,12 @@ export default function TeachersTable({ teachers, availableSubjects }: { teacher
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('fullName')}</TableHead>
+              <TableHead
+                className="cursor-pointer select-none hover:text-foreground"
+                onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+              >
+                {t('fullName')} {sortOrder === 'asc' ? '↑' : sortOrder === 'desc' ? '↓' : '↕'}
+              </TableHead>
               <TableHead>{t('idNumber')}</TableHead>
               <TableHead>{t('fileNumber')}</TableHead>
               <TableHead>{t('nationality')}</TableHead>
@@ -66,7 +92,7 @@ export default function TeachersTable({ teachers, availableSubjects }: { teacher
             </TableRow>
           </TableHeader>
           <TableBody>
-            {teachers.map((teacher) => (
+            {sortedTeachers.map((teacher) => (
               <TableRow key={teacher.id}>
                 <TableCell className="font-medium">
                   {teacher.firstName} {teacher.lastName}

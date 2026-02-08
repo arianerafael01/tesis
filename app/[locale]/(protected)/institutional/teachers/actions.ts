@@ -98,14 +98,20 @@ export async function removeSubjectFromTeacher(teacherId: string, subjectId: str
 
 export async function createAvailability(teacherId: string, day: 'M' | 'T' | 'W' | 'TH' | 'F', timeRange: string) {
   // Check if availability already exists for this teacher and day
-  const existingAvailability = await prisma.availability.findFirst({
+  const existingAvailability = await prisma.availability.findUnique({
     where: {
-      teacherId,
-      day,
+      teacherId_day: {
+        teacherId,
+        day,
+      }
     }
   })
 
   if (existingAvailability) {
+    // Check if timeRange already exists to prevent duplicates
+    if (existingAvailability.timeRanges.includes(timeRange)) {
+      return
+    }
     // Add time range to existing availability
     await prisma.availability.update({
       where: { id: existingAvailability.id },
@@ -115,13 +121,27 @@ export async function createAvailability(teacherId: string, day: 'M' | 'T' | 'W'
         }
       }
     })
+    // Create TeacherAvailability entry for this time slot
+    await prisma.teacherAvailability.create({
+      data: {
+        availabilityId: existingAvailability.id,
+        timeRange,
+      }
+    })
   } else {
     // Create new availability
-    await prisma.availability.create({
+    const newAvailability = await prisma.availability.create({
       data: {
         teacherId,
         day,
         timeRanges: [timeRange],
+      }
+    })
+    // Create TeacherAvailability entry for this time slot
+    await prisma.teacherAvailability.create({
+      data: {
+        availabilityId: newAvailability.id,
+        timeRange,
       }
     })
   }
@@ -145,6 +165,14 @@ export async function removeTimeRange(teacherId: string, day: 'M' | 'T' | 'W' | 
   })
 
   if (availability) {
+    // Delete the TeacherAvailability entry for this time range
+    await prisma.teacherAvailability.deleteMany({
+      where: {
+        availabilityId: availability.id,
+        timeRange,
+      }
+    })
+
     const updatedTimeRanges = availability.timeRanges.filter(tr => tr !== timeRange)
     
     if (updatedTimeRanges.length === 0) {
@@ -162,6 +190,38 @@ export async function removeTimeRange(teacherId: string, day: 'M' | 'T' | 'W' | 
       })
     }
   }
+  revalidatePath('/institutional/teachers')
+}
+
+export async function assignSubjectToTimeSlot(teacherId: string, day: 'M' | 'T' | 'W' | 'TH' | 'F', timeRange: string, subjectId: string | null) {
+  const availability = await prisma.availability.findFirst({
+    where: {
+      teacherId,
+      day,
+    }
+  })
+
+  if (!availability) {
+    throw new Error('Availability not found')
+  }
+
+  // Update or create TeacherAvailability entry
+  await prisma.teacherAvailability.upsert({
+    where: {
+      availabilityId_timeRange: {
+        availabilityId: availability.id,
+        timeRange,
+      }
+    },
+    update: {
+      subjectId,
+    },
+    create: {
+      availabilityId: availability.id,
+      timeRange,
+      subjectId,
+    }
+  })
 
   revalidatePath('/institutional/teachers')
 } 

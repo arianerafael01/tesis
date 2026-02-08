@@ -6,16 +6,37 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Icon } from '@/components/ui/icon'
 import { useTranslations } from 'next-intl'
 import { useState } from 'react'
-import { createAvailability, removeTimeRange } from './actions'
+import { createAvailability, removeTimeRange, assignSubjectToTimeSlot } from './actions'
 
 interface Teacher {
   id: string
   firstName: string
   lastName: string
+  subjectsTeachers: {
+    subject: {
+      id: string
+      name: string
+      modules: number
+      course: {
+        id: string
+        name: string
+      }
+    }
+  }[]
   availabilities: {
     id: string
     day: 'M' | 'T' | 'W' | 'TH' | 'F'
     timeRanges: string[]
+    teacherAvailabilities: {
+      id: string
+      timeRange: string
+      subjectId: string | null
+      subject: {
+        id: string
+        name: string
+        modules: number
+      } | null
+    }[]
   }[]
 }
 
@@ -68,15 +89,30 @@ export default function AvailabilityAssignment({ teacher }: AvailabilityAssignme
     await removeTimeRange(teacher.id, day, timeRange)
   }
 
+  const handleSubjectAssign = async (day: 'M' | 'T' | 'W' | 'TH' | 'F', timeRange: string, subjectId: string | null) => {
+    await assignSubjectToTimeSlot(teacher.id, day, timeRange, subjectId)
+  }
+
   const getDayLabel = (day: string) => {
     return DAYS.find(d => d.value === day)?.label || day
   }
+
+  // Calculate required and current modules
+  const requiredModules = teacher.subjectsTeachers.reduce((sum, st) => sum + st.subject.modules, 0)
+  const currentModules = teacher.availabilities.reduce((sum, a) => 
+    sum + a.teacherAvailabilities.filter(ta => ta.subjectId).length, 0
+  )
+  const missingModules = Math.max(0, requiredModules - currentModules)
 
   const groupedAvailabilities = teacher.availabilities.reduce((acc, availability) => {
     if (!acc[availability.day]) {
       acc[availability.day] = []
     }
-    acc[availability.day].push(...availability.timeRanges)
+    availability.timeRanges.forEach(tr => {
+      if (!acc[availability.day].includes(tr)) {
+        acc[availability.day].push(tr)
+      }
+    })
     return acc
   }, {} as Record<string, string[]>)
 
@@ -87,36 +123,77 @@ export default function AvailabilityAssignment({ teacher }: AvailabilityAssignme
           <CardTitle>{t('availabilitySchedule')}</CardTitle>
         </CardHeader>
         <CardContent>
+          {requiredModules > 0 && (
+            <div className={`flex items-center justify-between px-4 py-3 rounded-lg mb-4 ${
+              currentModules >= requiredModules
+                ? 'bg-green-50 border border-green-200 text-green-700'
+                : 'bg-amber-50 border border-amber-200 text-amber-700'
+            }`}>
+              <div className="text-sm">
+                <span className="font-semibold">Módulos cargados: {currentModules} / {requiredModules}</span>
+                {missingModules > 0 && (
+                  <span className="ml-2">(faltan {missingModules})</span>
+                )}
+              </div>
+              <div className="text-xs">
+                {teacher.subjectsTeachers.map(st => (
+                  <span key={st.subject.id} className="mr-3">
+                    {st.subject.name}: {st.subject.modules} mód.
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
           {Object.keys(groupedAvailabilities).length > 0 ? (
             <div className="space-y-4">
               {Object.entries(groupedAvailabilities).map(([day, timeRanges]) => (
                 <div key={day} className="border rounded-lg p-4">
                   <h4 className="font-medium mb-2">{getDayLabel(day)}</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {timeRanges.map((timeRange, index) => (
-                      <div key={index} className="flex items-center gap-2 bg-secondary px-4 py-3 rounded-lg border-2 border-gray-200 shadow-sm">
-                        <span className="text-sm font-medium">{timeRange}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveTimeRange(day as 'M' | 'T' | 'W' | 'TH' | 'F', timeRange)}
-                          className="h-8 w-8 p-0 ml-2 text-red-500 hover:bg-red-100 hover:text-red-700"
-                          title="Eliminar horario"
-                        >
-                          <Icon icon="heroicons:trash" className="h-5 w-5" />
-                        </Button>
-                        {/* Botón de prueba más visible */}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRemoveTimeRange(day as 'M' | 'T' | 'W' | 'TH' | 'F', timeRange)}
-                          className="h-8 px-3 text-red-600 border-red-300 hover:bg-red-50"
-                          title="Eliminar horario (prueba)"
-                        >
-                          X
-                        </Button>
-                      </div>
-                    ))}
+                  <div className="space-y-2">
+                    {timeRanges.map((timeRange, index) => {
+                      // Find the teacher availability for this time range
+                      const dayAvailability = teacher.availabilities.find(a => a.day === day)
+                      const teacherAvail = dayAvailability?.teacherAvailabilities.find(ta => ta.timeRange === timeRange)
+                      
+                      return (
+                        <div key={index} className="flex items-center gap-2 bg-secondary px-4 py-3 rounded-lg border-2 border-gray-200 shadow-sm">
+                          <span className="text-sm font-medium flex-1">{timeRange}</span>
+                          
+                          <Select
+                            value={teacherAvail?.subjectId ?? ""}
+                            onValueChange={(value) =>
+                              handleSubjectAssign(
+                                day as 'M' | 'T' | 'W' | 'TH' | 'F',
+                                timeRange,
+                                value || null
+                              )
+                            }
+                          >
+                            <SelectTrigger className="w-40">
+                              <SelectValue placeholder="Sin materia" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {teacher.subjectsTeachers.map((st) => (
+                                <SelectItem key={st.subject.id} value={st.subject.id}>
+                                  {st.subject.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRemoveTimeRange(day as 'M' | 'T' | 'W' | 'TH' | 'F', timeRange)}
+                            className="h-8 px-3 text-red-600 border-red-300 hover:bg-red-50"
+                            title="Eliminar horario"
+                          >
+                            X
+                          </Button>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               ))}

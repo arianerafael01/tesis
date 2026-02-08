@@ -18,6 +18,16 @@ interface Teacher {
     id: string
     day: 'M' | 'T' | 'W' | 'TH' | 'F'
     timeRanges: string[]
+    teacherAvailabilities: {
+      id: string
+      timeRange: string
+      subjectId: string | null
+      subject: {
+        id: string
+        name: string
+        modules: number
+      } | null
+    }[]
   }[]
 }
 
@@ -33,7 +43,15 @@ export default async function TeachersPage() {
           }
         }
       },
-      availabilities: true
+      availabilities: {
+        include: {
+          teacherAvailabilities: {
+            include: {
+              subject: true
+            }
+          }
+        }
+      }
     },
     orderBy: {
       createdAt: 'desc'

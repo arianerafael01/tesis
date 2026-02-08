@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Icon } from '@/components/ui/icon'
 import { useTranslations } from 'next-intl'
+import { useState } from 'react'
 import { updateTeacher } from './actions'
 import SubjectAssignment from './subject-assignment'
 import AvailabilityAssignment from './availability-assignment'
@@ -25,6 +26,7 @@ interface Teacher {
     subject: {
       id: string
       name: string
+      modules: number
       course: {
         id: string
         name: string
@@ -35,6 +37,16 @@ interface Teacher {
     id: string
     day: 'M' | 'T' | 'W' | 'TH' | 'F'
     timeRanges: string[]
+    teacherAvailabilities: {
+      id: string
+      timeRange: string
+      subjectId: string | null
+      subject: {
+        id: string
+        name: string
+        modules: number
+      } | null
+    }[]
   }[]
 }
 
@@ -49,8 +61,15 @@ interface Subject {
 
 export default function EditTeacherDialog({ teacher, availableSubjects }: { teacher: Teacher, availableSubjects: Subject[] }) {
   const t = useTranslations('teachersPage')
+  const [open, setOpen] = useState(false)
+
+  const handleSubmit = async (formData: FormData) => {
+    await updateTeacher(teacher.id, formData)
+    setOpen(false)
+  }
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Icon icon="heroicons-outline:pencil" className="h-4 w-4" />
@@ -60,7 +79,7 @@ export default function EditTeacherDialog({ teacher, availableSubjects }: { teac
         <DialogHeader>
           <DialogTitle>{t('editTeacher')}</DialogTitle>
         </DialogHeader>
-                <form action={(formData) => updateTeacher(teacher.id, formData)}>
+                <form action={handleSubmit}>
           <div className="grid gap-6 py-4">
             {/* Name Fields */}
             <div className="grid grid-cols-2 gap-6">

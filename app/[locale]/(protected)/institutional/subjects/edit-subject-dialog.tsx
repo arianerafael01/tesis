@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Icon } from '@/components/ui/icon'
 import { useTranslations } from 'next-intl'
+import { useState } from 'react'
 import { updateSubject } from './actions'
 
 interface Subject {
@@ -34,8 +35,15 @@ interface Course {
 
 export default function EditSubjectDialog({ subject, courses }: { subject: Subject, courses: Course[] }) {
   const t = useTranslations('subjectsPage')
+  const [open, setOpen] = useState(false)
+
+  const handleSubmit = async (formData: FormData) => {
+    await updateSubject(subject.id, formData)
+    setOpen(false)
+  }
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Icon icon="heroicons-outline:pencil" className="h-4 w-4" />
@@ -45,7 +53,7 @@ export default function EditSubjectDialog({ subject, courses }: { subject: Subje
         <DialogHeader>
           <DialogTitle>{t('editSubject')}</DialogTitle>
         </DialogHeader>
-        <form action={(formData) => updateSubject(subject.id, formData)}>
+        <form action={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
