@@ -229,52 +229,26 @@ export async function removeTimeRange(teacherId: string, day: 'M' | 'T' | 'W' | 
   })
 
   if (availability) {
-    // Calculate total modules needed for this teacher
-    const teacherAssignments = await prisma.subjectsTeacher.findMany({
-      where: { teacherId },
+    // Check if this specific time slot has an active assignment
+    const activeAssignment = await prisma.teacherAvailability.findFirst({
+      where: {
+        availabilityId: availability.id,
+        timeRange,
+        subjectId: { not: null },
+        courseId: { not: null }
+      },
       include: {
-        course: {
-          include: {
-            coursesSubjects: {
-              select: {
-                subjectId: true,
-                modules: true
-              }
-            }
-          }
-        }
+        subject: { select: { name: true } },
+        course: { select: { name: true } }
       }
     })
 
-    let totalModulesNeeded = 0
-    for (const assignment of teacherAssignments) {
-      const courseSubject = assignment.course.coursesSubjects.find(
-        cs => cs.subjectId === assignment.subjectId
-      )
-      if (courseSubject) {
-        totalModulesNeeded += courseSubject.modules
-      }
-    }
-
-    // Count current total availability slots
-    const currentAvailabilities = await prisma.availability.findMany({
-      where: { teacherId },
-      select: { timeRanges: true }
-    })
-
-    const currentTotalSlots = currentAvailabilities.reduce(
-      (sum, avail) => sum + avail.timeRanges.length, 
-      0
-    )
-
-    const totalSlotsAfterRemoval = currentTotalSlots - 1
-
-    // Validate minimum slots requirement
-    if (totalModulesNeeded > 0 && totalSlotsAfterRemoval < totalModulesNeeded) {
+    // Only block deletion if this specific slot has an active assignment
+    if (activeAssignment) {
       throw new Error(
-        `No se puede eliminar este módulo. El profesor necesita al menos ${totalModulesNeeded} módulos de disponibilidad para cubrir todas sus materias asignadas. ` +
-        `Actualmente tiene ${currentTotalSlots} módulos. Si elimina este, quedarían ${totalSlotsAfterRemoval} módulos, ` +
-        `faltando ${totalModulesNeeded - totalSlotsAfterRemoval} módulos.`
+        `No se puede eliminar este módulo porque tiene una asignación activa: ` +
+        `${activeAssignment.subject?.name} en ${activeAssignment.course?.name}. ` +
+        `Por favor, elimine primero la asignación de materia antes de eliminar la disponibilidad.`
       )
     }
 
