@@ -30,6 +30,10 @@ interface Teacher {
     subject: {
       id: string
       name: string
+      coursesSubjects: {
+        courseId: string
+        modules: number
+      }[]
     }
     course: {
       id: string

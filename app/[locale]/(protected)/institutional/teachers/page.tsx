@@ -25,7 +25,6 @@ interface Teacher {
       subject: {
         id: string
         name: string
-        modules: number
       } | null
     }[]
   }[]

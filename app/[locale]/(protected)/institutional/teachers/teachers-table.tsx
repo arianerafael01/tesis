@@ -20,13 +20,19 @@ interface Teacher {
   neighborhood: string
   createdAt: Date
   subjectsTeachers: {
+    subjectId: string
+    courseId: string
     subject: {
       id: string
       name: string
-      course: {
-        id: string
-        name: string
-      }
+      coursesSubjects: {
+        courseId: string
+        modules: number
+      }[]
+    }
+    course: {
+      id: string
+      name: string
     }
   }[]
   availabilities: {
@@ -40,7 +46,6 @@ interface Teacher {
       subject: {
         id: string
         name: string
-        modules: number
       } | null
     }[]
   }[]
@@ -49,10 +54,13 @@ interface Teacher {
 interface Subject {
   id: string
   name: string
-  course: {
-    id: string
-    name: string
-  }
+  coursesSubjects: {
+    courseId: string
+    course: {
+      id: string
+      name: string
+    }
+  }[]
 }
 
 export default function TeachersTable({ teachers, availableSubjects }: { teachers: Teacher[], availableSubjects: Subject[] }) {

@@ -13,12 +13,15 @@ import { createSubject, updateSubject, deleteSubject } from './subjects/actions'
 interface Subject {
   id: string
   name: string
-  courseId: string
   createdAt: Date
-  course: {
-    id: string
-    name: string
-  }
+  coursesSubjects: {
+    courseId: string
+    modules: number
+    course: {
+      id: string
+      name: string
+    }
+  }[]
   subjectsTeachers: any[]
 }
 
