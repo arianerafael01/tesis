@@ -265,6 +265,47 @@ async function main() {
 
   console.log('✅ Teacher-Subject-Course relationships created')
 
+  // Create admin user
+  const adminUser = await prisma.user.create({
+    data: {
+      email: 'admin@instituto-etchegoyen.edu.ar',
+      name: 'Administrador',
+      role: 'ADMIN',
+    },
+  })
+
+  console.log('✅ Admin user created')
+
+  // Create teacher users linked to their teacher profiles
+  await prisma.user.create({
+    data: {
+      email: 'juan.perez@instituto-etchegoyen.edu.ar',
+      name: 'Juan Pérez',
+      role: 'TEACHER',
+      teacherId: teacher1.id,
+    },
+  })
+
+  await prisma.user.create({
+    data: {
+      email: 'maria.gonzalez@instituto-etchegoyen.edu.ar',
+      name: 'María González',
+      role: 'TEACHER',
+      teacherId: teacher2.id,
+    },
+  })
+
+  await prisma.user.create({
+    data: {
+      email: 'carlos.rodriguez@instituto-etchegoyen.edu.ar',
+      name: 'Carlos Rodríguez',
+      role: 'TEACHER',
+      teacherId: teacher3.id,
+    },
+  })
+
+  console.log('✅ Teacher users created')
+
   console.log('🎉 Database seeded successfully!')
 }
 

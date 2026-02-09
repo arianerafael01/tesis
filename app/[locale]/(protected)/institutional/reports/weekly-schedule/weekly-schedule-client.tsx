@@ -93,10 +93,11 @@ function getDayLabel(day: string) {
   return DAYS.find(d => d.value === day)?.label || day
 }
 
-export default function WeeklyScheduleClient({ teachers }: { teachers: Teacher[] }) {
+export default function WeeklyScheduleClient({ teachers, userRole }: { teachers: Teacher[], userRole: 'ADMIN' | 'TEACHER' }) {
   const t = useTranslations('weeklySchedulePage')
   const router = useRouter()
   const printRef = useRef<HTMLDivElement>(null)
+  const isAdmin = userRole === 'ADMIN'
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('all')
   const [isAutoAssigning, setIsAutoAssigning] = useState(false)
 
@@ -274,24 +275,28 @@ export default function WeeklyScheduleClient({ teachers }: { teachers: Teacher[]
           <p className="text-muted-foreground">{t('description')}</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button
-            onClick={handleUnassignAll}
-            disabled={!hasTeachersWithAvailability}
-            color="destructive"
-            className="gap-2"
-          >
-            <Icon icon="heroicons:x-circle" className="h-4 w-4" />
-            {t('unassignAll')}
-          </Button>
-          <Button
-            onClick={handleAutoAssignAll}
-            disabled={isAutoAssigning || !hasTeachersWithAvailability}
-            variant="default"
-            className="gap-2"
-          >
-            <Icon icon="heroicons:sparkles" className="h-4 w-4" />
-            {isAutoAssigning ? t('assigning') : t('autoAssign')}
-          </Button>
+          {isAdmin && (
+            <>
+              <Button
+                onClick={handleUnassignAll}
+                disabled={!hasTeachersWithAvailability}
+                color="destructive"
+                className="gap-2"
+              >
+                <Icon icon="heroicons:x-circle" className="h-4 w-4" />
+                {t('unassignAll')}
+              </Button>
+              <Button
+                onClick={handleAutoAssignAll}
+                disabled={isAutoAssigning || !hasTeachersWithAvailability}
+                variant="default"
+                className="gap-2"
+              >
+                <Icon icon="heroicons:sparkles" className="h-4 w-4" />
+                {isAutoAssigning ? t('assigning') : t('autoAssign')}
+              </Button>
+            </>
+          )}
           <Select value={selectedTeacherId} onValueChange={setSelectedTeacherId}>
             <SelectTrigger className="w-[280px]">
               <SelectValue placeholder={t('selectTeacher')} />

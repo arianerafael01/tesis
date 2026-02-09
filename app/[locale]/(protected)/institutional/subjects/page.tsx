@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import SubjectsClient from '../subjects-client'
 import SubjectsTable from './subjects-table'
+import { RoleGate } from '@/components/auth/role-gate'
 
 interface Subject {
   id: string
@@ -56,9 +57,11 @@ export default async function SubjectsPage() {
   })
 
   return (
-    <div className="space-y-6">
-      <SubjectsClient subjects={subjects} courses={courses} />
-      <SubjectsTable subjects={subjects} courses={courses} />
-    </div>
+    <RoleGate allowedRoles={["ADMIN"]}>
+      <div className="space-y-6">
+        <SubjectsClient subjects={subjects} courses={courses} />
+        <SubjectsTable subjects={subjects} courses={courses} />
+      </div>
+    </RoleGate>
   )
 } 

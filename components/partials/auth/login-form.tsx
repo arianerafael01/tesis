@@ -50,17 +50,22 @@ const LoginForm = () => {
       try {
         const response = await loginUser(data);
 
-        if (!!response.error) {
-          toast("Event has been created", {
-            description: "Sunday, December 03, 2023 at 9:00 AM",
-
+        if (response?.error) {
+          toast.error("Error de autenticación", {
+            description: response.error || "Credenciales inválidas",
           })
-        } else {
-          router.push('/institutional/reports/weekly-schedule');
-          toast.success("Successfully logged in");
         }
+        // If successful, NextAuth will handle the redirect automatically
+        // No need to manually redirect here
       } catch (err: any) {
-        toast.error(err.message);
+        // Check if it's a redirect error (which is expected for successful login)
+        if (err.message?.includes('NEXT_REDIRECT')) {
+          // This is expected - NextAuth is redirecting after successful login
+          return;
+        }
+        toast.error("Error al iniciar sesión", {
+          description: err.message || "Ocurrió un error inesperado",
+        });
       }
     });
   };

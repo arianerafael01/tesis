@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import ClassroomsClient from '../classrooms-client'
 import ClassroomsTable from './classrooms-table'
+import { RoleGate } from '@/components/auth/role-gate'
 
 interface Classroom {
   id: string
@@ -21,9 +22,11 @@ export default async function ClassroomsPage() {
   })
 
   return (
-    <div className="space-y-6">
-      <ClassroomsClient classrooms={classrooms} />
-      <ClassroomsTable classrooms={classrooms} />
-    </div>
+    <RoleGate allowedRoles={["ADMIN"]}>
+      <div className="space-y-6">
+        <ClassroomsClient classrooms={classrooms} />
+        <ClassroomsTable classrooms={classrooms} />
+      </div>
+    </RoleGate>
   )
 } 

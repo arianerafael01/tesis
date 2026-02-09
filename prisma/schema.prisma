@@ -37,14 +37,24 @@ enum Day {
   F
 }
 
+enum Role {
+  ADMIN
+  TEACHER
+}
+
 // User model (for authentication)
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String?
   image     String?
+  role      Role     @default(ADMIN)
+  teacherId String?  @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Relations
+  teacher   Teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
 
   @@map("users")
 }
@@ -64,6 +74,7 @@ model Teacher {
   updatedAt    DateTime @updatedAt
 
   // Relations
+  user             User?
   subjectsTeachers SubjectsTeacher[]
   availabilities   Availability[]
 

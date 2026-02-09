@@ -82,10 +82,11 @@ function getDayLabel(day: string) {
   return DAYS.find(d => d.value === day)?.label || day
 }
 
-export default function CourseScheduleClient({ courses, teachers }: { courses: Course[], teachers: Teacher[] }) {
+export default function CourseScheduleClient({ courses, teachers, userRole }: { courses: Course[], teachers: Teacher[], userRole: 'ADMIN' | 'TEACHER' }) {
   const t = useTranslations('courseSchedulePage')
   const printRef = useRef<HTMLDivElement>(null)
   const [selectedCourseId, setSelectedCourseId] = useState<string>('all')
+  const isAdmin = userRole === 'ADMIN'
 
   const handlePrint = () => {
     if (!printRef.current) return
