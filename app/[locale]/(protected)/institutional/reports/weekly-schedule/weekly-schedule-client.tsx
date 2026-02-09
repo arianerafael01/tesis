@@ -269,19 +269,19 @@ export default function WeeklyScheduleClient({ teachers, userRole }: { teachers:
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">{t('title')}</h2>
           <p className="text-muted-foreground">{t('description')}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           {isAdmin && (
             <>
               <Button
                 onClick={handleUnassignAll}
                 disabled={!hasTeachersWithAvailability}
                 color="destructive"
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
               >
                 <Icon icon="heroicons:x-circle" className="h-4 w-4" />
                 {t('unassignAll')}
@@ -290,7 +290,7 @@ export default function WeeklyScheduleClient({ teachers, userRole }: { teachers:
                 onClick={handleAutoAssignAll}
                 disabled={isAutoAssigning || !hasTeachersWithAvailability}
                 variant="default"
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
               >
                 <Icon icon="heroicons:sparkles" className="h-4 w-4" />
                 {isAutoAssigning ? t('assigning') : t('autoAssign')}
@@ -298,7 +298,7 @@ export default function WeeklyScheduleClient({ teachers, userRole }: { teachers:
             </>
           )}
           <Select value={selectedTeacherId} onValueChange={setSelectedTeacherId}>
-            <SelectTrigger className="w-[280px]">
+            <SelectTrigger className="w-full sm:w-[280px]">
               <SelectValue placeholder={t('selectTeacher')} />
             </SelectTrigger>
             <SelectContent>
@@ -310,7 +310,7 @@ export default function WeeklyScheduleClient({ teachers, userRole }: { teachers:
               ))}
             </SelectContent>
           </Select>
-          <Button onClick={handlePrint} variant="outline">
+          <Button onClick={handlePrint} variant="outline" className="w-full sm:w-auto">
             <Icon icon="heroicons-outline:printer" className="mr-2 h-4 w-4" />
             {t('print')}
           </Button>
