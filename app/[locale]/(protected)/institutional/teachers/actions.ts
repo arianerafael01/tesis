@@ -110,6 +110,54 @@ export async function removeSubjectFromTeacher(teacherId: string, subjectId: str
   revalidatePath('/institutional/teachers')
 }
 
+// Helper function to check if teacher has minimum required availability
+export async function checkTeacherAvailability(teacherId: string) {
+  // Calculate total modules needed for this teacher
+  const teacherAssignments = await prisma.subjectsTeacher.findMany({
+    where: { teacherId },
+    include: {
+      course: {
+        include: {
+          coursesSubjects: {
+            select: {
+              subjectId: true,
+              modules: true
+            }
+          }
+        }
+      }
+    }
+  })
+
+  let totalModulesNeeded = 0
+  for (const assignment of teacherAssignments) {
+    const courseSubject = assignment.course.coursesSubjects.find(
+      cs => cs.subjectId === assignment.subjectId
+    )
+    if (courseSubject) {
+      totalModulesNeeded += courseSubject.modules
+    }
+  }
+
+  // Count current total availability slots
+  const currentAvailabilities = await prisma.availability.findMany({
+    where: { teacherId },
+    select: { timeRanges: true }
+  })
+
+  const currentTotalSlots = currentAvailabilities.reduce(
+    (sum, avail) => sum + avail.timeRanges.length, 
+    0
+  )
+
+  return {
+    totalModulesNeeded,
+    currentTotalSlots,
+    hasEnough: currentTotalSlots >= totalModulesNeeded,
+    missing: Math.max(0, totalModulesNeeded - currentTotalSlots)
+  }
+}
+
 export async function createAvailability(teacherId: string, day: 'M' | 'T' | 'W' | 'TH' | 'F', timeRange: string) {
   // Check if availability already exists for this teacher and day
   const existingAvailability = await prisma.availability.findUnique({
@@ -181,6 +229,55 @@ export async function removeTimeRange(teacherId: string, day: 'M' | 'T' | 'W' | 
   })
 
   if (availability) {
+    // Calculate total modules needed for this teacher
+    const teacherAssignments = await prisma.subjectsTeacher.findMany({
+      where: { teacherId },
+      include: {
+        course: {
+          include: {
+            coursesSubjects: {
+              select: {
+                subjectId: true,
+                modules: true
+              }
+            }
+          }
+        }
+      }
+    })
+
+    let totalModulesNeeded = 0
+    for (const assignment of teacherAssignments) {
+      const courseSubject = assignment.course.coursesSubjects.find(
+        cs => cs.subjectId === assignment.subjectId
+      )
+      if (courseSubject) {
+        totalModulesNeeded += courseSubject.modules
+      }
+    }
+
+    // Count current total availability slots
+    const currentAvailabilities = await prisma.availability.findMany({
+      where: { teacherId },
+      select: { timeRanges: true }
+    })
+
+    const currentTotalSlots = currentAvailabilities.reduce(
+      (sum, avail) => sum + avail.timeRanges.length, 
+      0
+    )
+
+    const totalSlotsAfterRemoval = currentTotalSlots - 1
+
+    // Validate minimum slots requirement
+    if (totalModulesNeeded > 0 && totalSlotsAfterRemoval < totalModulesNeeded) {
+      throw new Error(
+        `No se puede eliminar este módulo. El profesor necesita al menos ${totalModulesNeeded} módulos de disponibilidad para cubrir todas sus materias asignadas. ` +
+        `Actualmente tiene ${currentTotalSlots} módulos. Si elimina este, quedarían ${totalSlotsAfterRemoval} módulos, ` +
+        `faltando ${totalModulesNeeded - totalSlotsAfterRemoval} módulos.`
+      )
+    }
+
     // Delete the TeacherAvailability entry for this time range
     await prisma.teacherAvailability.deleteMany({
       where: {
@@ -391,6 +488,17 @@ export async function assignSubjectToTimeSlot(
 }
 
 export async function autoAssignSubjects(teacherId: string) {
+  // Check if teacher has sufficient availability before attempting auto-assignment
+  const availabilityCheck = await checkTeacherAvailability(teacherId)
+  
+  if (!availabilityCheck.hasEnough) {
+    throw new Error(
+      `El profesor necesita al menos ${availabilityCheck.totalModulesNeeded} módulos de disponibilidad para cubrir todas sus materias asignadas. ` +
+      `Actualmente tiene ${availabilityCheck.currentTotalSlots} módulos. ` +
+      `Por favor, agregue ${availabilityCheck.missing} módulos más de disponibilidad antes de usar la asignación automática.`
+    )
+  }
+
   // Get teacher with all subjects and availabilities
   const teacher = await prisma.teacher.findUnique({
     where: { id: teacherId },
