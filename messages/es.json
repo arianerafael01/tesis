@@ -264,6 +264,7 @@
     "subjects": "Materias",
     "classrooms": "Aulas",
     "weeklySchedule": "Grilla Semanal",
+    "courseSchedule": "Currícula por Curso",
     "reports": "Reportes"
   },
   "teachersPage": {
@@ -396,6 +397,16 @@
     "unassignAll": "Desasignar Todas las Materias",
     "autoAssign": "Asignar Materias Automáticamente",
     "assigning": "Asignando..."
+  },
+  "courseSchedulePage": {
+    "title": "Currícula Semanal por Curso",
+    "description": "Vista semanal de materias y profesores asignados por curso.",
+    "selectCourse": "Seleccionar curso",
+    "allCourses": "Todos los cursos",
+    "print": "Imprimir",
+    "time": "Horario",
+    "subjects": "materias",
+    "noCoursesFound": "No se encontraron cursos."
   },
   "products": {
     "title": "Products",

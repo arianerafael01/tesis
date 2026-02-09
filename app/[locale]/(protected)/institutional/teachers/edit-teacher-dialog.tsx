@@ -55,10 +55,13 @@ interface Teacher {
 interface Subject {
   id: string
   name: string
-  course: {
-    id: string
-    name: string
-  }
+  coursesSubjects: {
+    courseId: string
+    course: {
+      id: string
+      name: string
+    }
+  }[]
 }
 
 export default function EditTeacherDialog({ teacher, availableSubjects }: { teacher: Teacher, availableSubjects: Subject[] }) {

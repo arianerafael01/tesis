@@ -147,6 +147,11 @@ export default function WeeklyScheduleClient({ teachers }: { teachers: Teacher[]
     ? teachers
     : teachers.filter(t => t.id === selectedTeacherId)
 
+  // Check if there are any teachers with availability
+  const hasTeachersWithAvailability = teachers.some(teacher => 
+    teacher.availabilities && teacher.availabilities.length > 0
+  )
+
   // Build schedule data per teacher
   const getTeacherSchedule = (teacher: Teacher) => {
     const schedule: Record<string, Record<string, { available: boolean; subject: { name: string; course: string; classroom: string } | null }>> = {}
@@ -271,6 +276,7 @@ export default function WeeklyScheduleClient({ teachers }: { teachers: Teacher[]
         <div className="flex items-center gap-3">
           <Button
             onClick={handleUnassignAll}
+            disabled={!hasTeachersWithAvailability}
             variant="destructive"
             className="gap-2"
           >
@@ -279,7 +285,7 @@ export default function WeeklyScheduleClient({ teachers }: { teachers: Teacher[]
           </Button>
           <Button
             onClick={handleAutoAssignAll}
-            disabled={isAutoAssigning}
+            disabled={isAutoAssigning || !hasTeachersWithAvailability}
             variant="default"
             className="gap-2"
           >

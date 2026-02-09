@@ -86,18 +86,46 @@ export default function AvailabilityAssignment({ teacher, onUpdate }: Availabili
   const [selectedTimeRange, setSelectedTimeRange] = useState<string>('')
 
   useEffect(() => {
-    setSelectedTimeRange('')
-  }, [selectedDay])
+    if (selectedDay) {
+      // Find available time ranges for the selected day
+      const dayAvailabilities = teacher.availabilities.find((a: any) => a.day === selectedDay)
+      const assignedTimeRanges = dayAvailabilities?.timeRanges || []
+      const availableTimeRanges = TIME_RANGES.filter(timeRange => !assignedTimeRanges.includes(timeRange))
+      
+      // Auto-select the first available time range
+      if (availableTimeRanges.length > 0) {
+        setSelectedTimeRange(availableTimeRanges[0])
+      } else {
+        setSelectedTimeRange('')
+      }
+    } else {
+      setSelectedTimeRange('')
+    }
+  }, [selectedDay, teacher.availabilities])
 
   const handleAddAvailability = async () => {
-  if (selectedDay && selectedTimeRange) {
-    await createAvailability(teacher.id, selectedDay as 'M' | 'T' | 'W' | 'TH' | 'F', selectedTimeRange)
-    setSelectedDay('')
-    setSelectedTimeRange('')
-    router.refresh()
-    onUpdate?.()
+    if (selectedDay && selectedTimeRange) {
+      await createAvailability(teacher.id, selectedDay as 'M' | 'T' | 'W' | 'TH' | 'F', selectedTimeRange)
+      
+      // Keep the selected day and find the next available time range
+      const dayAvailabilities = teacher.availabilities.find((a: any) => a.day === selectedDay)
+      const currentAssignedTimeRanges = dayAvailabilities?.timeRanges || []
+      
+      // Add the just-added time range to the list
+      const updatedAssignedTimeRanges = [...currentAssignedTimeRanges, selectedTimeRange]
+      
+      // Find the first available time range that hasn't been assigned yet
+      const nextAvailableTimeRange = TIME_RANGES.find(timeRange => 
+        !updatedAssignedTimeRanges.includes(timeRange)
+      )
+      
+      // Set the next available time range, or empty if none available
+      setSelectedTimeRange(nextAvailableTimeRange || '')
+      
+      router.refresh()
+      onUpdate?.()
+    }
   }
-}
 
   const handleRemoveTimeRange = async (day: 'M' | 'T' | 'W' | 'TH' | 'F', timeRange: string) => {
     await removeTimeRange(teacher.id, day, timeRange)

@@ -264,6 +264,7 @@
     "subjects": "Subjects",
     "classrooms": "Classrooms",
     "weeklySchedule": "Weekly Schedule",
+    "courseSchedule": "Course Curriculum",
     "reports": "Reports"
   },
   "teachersPage": {
@@ -396,6 +397,16 @@
     "unassignAll": "Unassign All Subjects",
     "autoAssign": "Auto-Assign Subjects",
     "assigning": "Assigning..."
+  },
+  "courseSchedulePage": {
+    "title": "Weekly Course Curriculum",
+    "description": "Weekly view of subjects and assigned teachers per course.",
+    "selectCourse": "Select course",
+    "allCourses": "All courses",
+    "print": "Print",
+    "time": "Time",
+    "subjects": "subjects",
+    "noCoursesFound": "No courses found."
   },
   "products": {
     "title": "Products",

@@ -286,15 +286,20 @@ export async function assignSubjectToTimeSlot(
       }
 
       // Check if there's already another subject from the same course in this time slot
+      // Exclude the current slot we're modifying (same teacher, same day, same timeRange)
       const conflictingAssignment = await prisma.teacherAvailability.findFirst({
         where: {
           availability: {
             day,
+            teacherId: {
+              not: teacherId  // Exclude assignments from the same teacher
+            }
           },
           timeRange,
           subjectId: {
-            not: existingSlot?.subjectId || undefined
-          }
+            not: null
+          },
+          courseId
         },
         include: {
           subject: {
