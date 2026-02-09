@@ -92,18 +92,21 @@ export default function EditTeacherDialog({ teacher, availableSubjects }: { teac
         </DialogHeader>
         
         <Tabs defaultValue="personal" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="personal">
-              <Icon icon="heroicons:user" className="h-4 w-4 mr-2" />
-              {t('personalData')}
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 gap-1">
+            <TabsTrigger value="personal" className="text-xs sm:text-sm">
+              <Icon icon="heroicons:user" className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">{t('personalData')}</span>
+              <span className="sm:hidden">Datos</span>
             </TabsTrigger>
-            <TabsTrigger value="subjects">
-              <Icon icon="heroicons:book-open" className="h-4 w-4 mr-2" />
-              {t('subjects')}
+            <TabsTrigger value="subjects" className="text-xs sm:text-sm">
+              <Icon icon="heroicons:book-open" className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">{t('subjects')}</span>
+              <span className="sm:hidden">Materias</span>
             </TabsTrigger>
-            <TabsTrigger value="availability">
-              <Icon icon="heroicons:calendar" className="h-4 w-4 mr-2" />
-              {t('availability')}
+            <TabsTrigger value="availability" className="text-xs sm:text-sm">
+              <Icon icon="heroicons:calendar" className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">{t('availability')}</span>
+              <span className="sm:hidden">Horarios</span>
             </TabsTrigger>
           </TabsList>
 
@@ -111,7 +114,7 @@ export default function EditTeacherDialog({ teacher, availableSubjects }: { teac
             <form action={handleSubmit}>
               <div className="grid gap-6 py-4">
             {/* Name Fields */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-2">
                 <Label htmlFor="firstName" className="text-sm font-medium">
                   {t('firstName')}
@@ -139,7 +142,7 @@ export default function EditTeacherDialog({ teacher, availableSubjects }: { teac
             </div>
             
             {/* ID and File Number Fields */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-2">
                 <Label htmlFor="idNumber" className="text-sm font-medium">
                   {t('idNumber')}
@@ -175,7 +178,7 @@ export default function EditTeacherDialog({ teacher, availableSubjects }: { teac
             </div>
 
             {/* Birthdate and Nationality */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-2">
                 <Label htmlFor="birthdate" className="text-sm font-medium">
                   {t('birthdate')}

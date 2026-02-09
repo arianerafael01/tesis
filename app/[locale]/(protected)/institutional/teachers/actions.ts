@@ -549,6 +549,22 @@ export async function autoAssignSubjects(teacherId: string) {
   let assignedCount = 0
   const errors: string[] = []
 
+  // Helper function to get days with existing assignments (to prioritize filling them)
+  const getDaysWithAssignments = async (teacherId: string): Promise<Set<string>> => {
+    const assignedDays = await prisma.teacherAvailability.findMany({
+      where: {
+        availability: { teacherId },
+        subjectId: { not: null }
+      },
+      include: {
+        availability: {
+          select: { day: true }
+        }
+      }
+    })
+    return new Set(assignedDays.map(ta => ta.availability.day))
+  }
+
   // Helper function to try assigning modules flexibly
   const tryAssignModules = async (
     subjectId: string,
@@ -557,13 +573,58 @@ export async function autoAssignSubjects(teacherId: string) {
     subjectName: string
   ): Promise<number> => {
     let assigned = 0
-    const days = Array.from(availableSlotsByDay.keys())
+    
+    // Get days that already have assignments to prioritize them
+    const daysWithAssignments = await getDaysWithAssignments(teacher.id)
+    
+    // Sort days: prioritize days with existing assignments first to minimize total days
+    const allDays = Array.from(availableSlotsByDay.keys())
+    const days = allDays.sort((a, b) => {
+      const aHasAssignments = daysWithAssignments.has(a)
+      const bHasAssignments = daysWithAssignments.has(b)
+      
+      // Days with assignments come first
+      if (aHasAssignments && !bHasAssignments) return -1
+      if (!aHasAssignments && bHasAssignments) return 1
+      
+      // Among days with/without assignments, maintain original order
+      return 0
+    })
     
     console.log(`  Available days for ${subjectName}:`, days)
+    console.log(`  Days with existing assignments:`, Array.from(daysWithAssignments))
     
-    // Special handling for 5 modules: try 3+2 split first
+    // Special handling for 5 modules: try to fit all in one day first, then 3+2 split prioritizing existing days
     if (count === 5 && assigned === 0) {
-      console.log(`  Attempting 3+2 split for 5 modules`)
+      console.log(`  Attempting to fit all 5 modules in one day first`)
+      for (const day of days) {
+        const slots5 = getContiguousSlots(day, 5, availableSlotsByDay)
+        if (slots5 && await canAssignToSlots(slots5.map(s => ({ day, timeRange: s.timeRange })), courseId, subjectId)) {
+          try {
+            console.log(`  ✓ Found 5 contiguous slots on ${day}`)
+            for (const slot of slots5) {
+              await prisma.teacherAvailability.upsert({
+                where: { availabilityId_timeRange: { availabilityId: slot.availabilityId, timeRange: slot.timeRange } },
+                update: { subjectId, courseId },
+                create: { availabilityId: slot.availabilityId, timeRange: slot.timeRange, subjectId, courseId }
+              })
+              assigned++
+              assignedCount++
+            }
+            const dayList = availableSlotsByDay.get(day)!
+            slots5.forEach(slot => {
+              const idx = dayList.indexOf(slot)
+              if (idx > -1) dayList.splice(idx, 1)
+            })
+            return assigned
+          } catch (error: any) {
+            console.error(`  ✗ Error with 5 contiguous:`, error.message)
+            errors.push(`${subjectName}: ${error.message}`)
+          }
+        }
+      }
+      
+      console.log(`  Attempting 3+2 split for 5 modules (prioritizing existing days)`)
       for (let i = 0; i < days.length; i++) {
         const slots3 = getContiguousSlots(days[i], 3, availableSlotsByDay)
         if (slots3) {
@@ -619,7 +680,93 @@ export async function autoAssignSubjects(teacherId: string) {
       console.log(`  ⚠️ Could not find 3+2 split, falling back to flexible assignment`)
     }
 
-    // Special handling for 3 modules: try 3 contiguous first, then 2+1 split
+    // Special handling for 4 modules: try to fit all in one day first, then 2+2 split prioritizing existing days
+    if (count === 4 && assigned === 0) {
+      console.log(`  Attempting to fit all 4 modules in one day first`)
+      for (const day of days) {
+        const slots4 = getContiguousSlots(day, 4, availableSlotsByDay)
+        if (slots4 && await canAssignToSlots(slots4.map(s => ({ day, timeRange: s.timeRange })), courseId, subjectId)) {
+          try {
+            console.log(`  ✓ Found 4 contiguous slots on ${day}`)
+            for (const slot of slots4) {
+              await prisma.teacherAvailability.upsert({
+                where: { availabilityId_timeRange: { availabilityId: slot.availabilityId, timeRange: slot.timeRange } },
+                update: { subjectId, courseId },
+                create: { availabilityId: slot.availabilityId, timeRange: slot.timeRange, subjectId, courseId }
+              })
+              assigned++
+              assignedCount++
+            }
+            const dayList = availableSlotsByDay.get(day)!
+            slots4.forEach(slot => {
+              const idx = dayList.indexOf(slot)
+              if (idx > -1) dayList.splice(idx, 1)
+            })
+            return assigned
+          } catch (error: any) {
+            console.error(`  ✗ Error with 4 contiguous:`, error.message)
+            errors.push(`${subjectName}: ${error.message}`)
+          }
+        }
+      }
+      
+      console.log(`  Attempting 2+2 split for 4 modules (prioritizing existing days)`)
+      for (let i = 0; i < days.length; i++) {
+        const slots2a = getContiguousSlots(days[i], 2, availableSlotsByDay)
+        if (slots2a) {
+          for (let j = 0; j < days.length; j++) {
+            if (i === j) continue
+            const slots2b = getContiguousSlots(days[j], 2, availableSlotsByDay)
+            if (slots2b) {
+              const allSlots = [
+                ...slots2a.map(s => ({ day: days[i], timeRange: s.timeRange })),
+                ...slots2b.map(s => ({ day: days[j], timeRange: s.timeRange }))
+              ]
+              if (await canAssignToSlots(allSlots, courseId, subjectId)) {
+                try {
+                  console.log(`  ✓ Found 2+2 split: ${days[i]} (2) + ${days[j]} (2)`)
+                  for (const slot of slots2a) {
+                    await prisma.teacherAvailability.upsert({
+                      where: { availabilityId_timeRange: { availabilityId: slot.availabilityId, timeRange: slot.timeRange } },
+                      update: { subjectId, courseId },
+                      create: { availabilityId: slot.availabilityId, timeRange: slot.timeRange, subjectId, courseId }
+                    })
+                    assigned++
+                    assignedCount++
+                  }
+                  for (const slot of slots2b) {
+                    await prisma.teacherAvailability.upsert({
+                      where: { availabilityId_timeRange: { availabilityId: slot.availabilityId, timeRange: slot.timeRange } },
+                      update: { subjectId, courseId },
+                      create: { availabilityId: slot.availabilityId, timeRange: slot.timeRange, subjectId, courseId }
+                    })
+                    assigned++
+                    assignedCount++
+                  }
+                  const day1List = availableSlotsByDay.get(days[i])!
+                  const day2List = availableSlotsByDay.get(days[j])!
+                  slots2a.forEach(slot => {
+                    const idx = day1List.indexOf(slot)
+                    if (idx > -1) day1List.splice(idx, 1)
+                  })
+                  slots2b.forEach(slot => {
+                    const idx = day2List.indexOf(slot)
+                    if (idx > -1) day2List.splice(idx, 1)
+                  })
+                  return assigned
+                } catch (error: any) {
+                  console.error(`  ✗ Error with 2+2 split:`, error.message)
+                  errors.push(`${subjectName}: ${error.message}`)
+                }
+              }
+            }
+          }
+        }
+      }
+      console.log(`  ⚠️ Could not find 4 contiguous or 2+2 split, falling back to flexible assignment`)
+    }
+
+    // Special handling for 3 modules: try 3 contiguous first, then 2+1 split (prioritizing existing days)
     if (count === 3 && assigned === 0) {
       console.log(`  Attempting 3 contiguous slots for 3 modules`)
       // First try: 3 contiguous slots in one day
@@ -650,8 +797,8 @@ export async function autoAssignSubjects(teacherId: string) {
         }
       }
       
-      // Second try: 2+1 split across different days
-      console.log(`  Attempting 2+1 split for 3 modules`)
+      // Second try: 2+1 split across different days (prioritizing existing days)
+      console.log(`  Attempting 2+1 split for 3 modules (prioritizing existing days)`)
       for (let i = 0; i < days.length; i++) {
         const slots2 = getContiguousSlots(days[i], 2, availableSlotsByDay)
         if (slots2) {
@@ -705,11 +852,11 @@ export async function autoAssignSubjects(teacherId: string) {
       console.log(`  ⚠️ Could not find 3 contiguous or 2+1 split, falling back to flexible assignment`)
     }
     
-    // Try to assign modules in any possible combination
+    // Try to assign modules in any possible combination (prioritizing days with existing assignments)
     while (assigned < count && days.length > 0) {
       let foundSlot = false
       
-      // Try contiguous slots first (preferred)
+      // Try contiguous slots first (preferred), prioritizing days with existing assignments
       for (const day of days) {
         const needed = count - assigned
         const daySlots = availableSlotsByDay.get(day)

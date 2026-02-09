@@ -3,6 +3,7 @@ import GitHub from "next-auth/providers/github";
 import Google from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
+import * as bcrypt from "bcryptjs";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   session: {
@@ -33,23 +34,32 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             return null;
           }
 
-          // For now, only admin user with hardcoded password
-          // TODO: Implement proper password hashing for all users
-          if (credentials.email === "admin@instituto-etchegoyen.edu.ar" && 
-              credentials.password === "institucion123") {
-            console.log("Admin login successful");
-            return {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              image: user.image,
-              role: user.role,
-              teacherId: user.teacherId,
-            };
+          // Check if user has a password set
+          if (!user.password) {
+            console.log("User has no password set:", credentials.email);
+            return null;
           }
 
-          console.log("Invalid password for:", credentials.email);
-          return null;
+          // Validate password using bcrypt
+          const isValidPassword = await bcrypt.compare(
+            credentials.password as string,
+            user.password
+          );
+
+          if (!isValidPassword) {
+            console.log("Invalid password for:", credentials.email);
+            return null;
+          }
+
+          console.log("Login successful for:", credentials.email);
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            image: user.image,
+            role: user.role,
+            teacherId: user.teacherId,
+          };
         } catch (error) {
           console.error("Auth error:", error);
           return null;

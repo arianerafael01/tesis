@@ -10,6 +10,13 @@ export async function createSubject(formData: FormData) {
   // Parse courses array: [{ courseId: string, modules: number }]
   const courses = JSON.parse(coursesJson) as Array<{ courseId: string; modules: number }>
 
+  // Validate minimum 2 modules per course
+  for (const course of courses) {
+    if (course.modules < 2) {
+      throw new Error('Cada materia debe tener al menos 2 módulos por curso')
+    }
+  }
+
   await prisma.subject.create({
     data: {
       name,
@@ -31,6 +38,13 @@ export async function updateSubject(subjectId: string, formData: FormData) {
   
   // Parse courses array: [{ courseId: string, modules: number }]
   const courses = JSON.parse(coursesJson) as Array<{ courseId: string; modules: number }>
+
+  // Validate minimum 2 modules per course
+  for (const course of courses) {
+    if (course.modules < 2) {
+      throw new Error('Cada materia debe tener al menos 2 módulos por curso')
+    }
+  }
 
   // Get existing course relationships
   const existingRelations = await prisma.courseSubject.findMany({

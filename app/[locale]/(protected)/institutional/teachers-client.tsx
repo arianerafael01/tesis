@@ -67,7 +67,7 @@ function AddTeacherDialog() {
           {t('addTeacher')}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[700px]">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('addNewTeacher')}</DialogTitle>
         </DialogHeader>
@@ -79,7 +79,7 @@ function AddTeacherDialog() {
         <form action={handleSubmit}>
           <div className="grid gap-6 py-4">
             {/* Name Fields */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-2">
                 <Label htmlFor="firstName" className="text-sm font-medium">
                   {t('firstName')}
@@ -105,7 +105,7 @@ function AddTeacherDialog() {
             </div>
             
             {/* ID and File Number Fields */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-2">
                 <Label htmlFor="idNumber" className="text-sm font-medium">
                   {t('idNumber')}
@@ -139,7 +139,7 @@ function AddTeacherDialog() {
             </div>
 
             {/* Birthdate and Nationality */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-2">
                 <Label htmlFor="birthdate" className="text-sm font-medium">
                   {t('birthdate')}

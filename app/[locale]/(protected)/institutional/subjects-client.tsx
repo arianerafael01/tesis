@@ -58,7 +58,7 @@ function AddSubjectDialog({ courses }: { courses: Course[] }) {
 
   const handleAddCourse = (courseId: string) => {
     if (!selectedCourses.find(c => c.courseId === courseId)) {
-      setSelectedCourses([...selectedCourses, { courseId, modules: 1 }])
+      setSelectedCourses([...selectedCourses, { courseId, modules: 2 }])
     }
   }
 
@@ -97,33 +97,33 @@ function AddSubjectDialog({ courses }: { courses: Course[] }) {
           {t('addSubject')}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('addNewSubject')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             {/* Subject Name */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-2 sm:gap-4">
+              <Label htmlFor="name" className="sm:text-right">
                 {t('name')}
               </Label>
               <Input
                 id="name"
                 value={subjectName}
                 onChange={(e) => setSubjectName(e.target.value)}
-                className="col-span-3"
+                className="sm:col-span-3"
                 maxLength={40}
                 required
               />
             </div>
 
             {/* Add Course Section */}
-            <div className="grid grid-cols-4 items-start gap-4">
-              <Label className="text-right pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-4 items-start gap-2 sm:gap-4">
+              <Label className="sm:text-right sm:pt-2">
                 {t('courses')}
               </Label>
-              <div className="col-span-3 space-y-2">
+              <div className="sm:col-span-3 space-y-2">
                 {/* Course Selector */}
                 {availableCourses.length > 0 && (
                   <Select onValueChange={handleAddCourse}>
@@ -151,19 +151,19 @@ function AddSubjectDialog({ courses }: { courses: Course[] }) {
                   {selectedCourses.map((sc) => {
                     const course = courses.find(c => c.id === sc.courseId)
                     return (
-                      <div key={sc.courseId} className="flex items-center gap-2 p-2 border rounded-lg">
+                      <div key={sc.courseId} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-2 border rounded-lg">
                         <span className="flex-1 font-medium">{course?.name}</span>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
                           <Label htmlFor={`modules-${sc.courseId}`} className="text-sm">
                             Módulos:
                           </Label>
                           <Input
                             id={`modules-${sc.courseId}`}
                             type="number"
-                            min={1}
+                            min={2}
                             max={20}
                             value={sc.modules}
-                            onChange={(e) => handleModulesChange(sc.courseId, parseInt(e.target.value) || 1)}
+                            onChange={(e) => handleModulesChange(sc.courseId, Math.max(2, parseInt(e.target.value) || 2))}
                             className="w-20"
                           />
                         </div>

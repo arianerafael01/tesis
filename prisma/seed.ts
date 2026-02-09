@@ -1,4 +1,5 @@
 import { PrismaClient } from '../lib/generated/prisma'
+import * as bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
@@ -266,9 +267,11 @@ async function main() {
   console.log('✅ Teacher-Subject-Course relationships created')
 
   // Create admin user
+  const hashedAdminPassword = await bcrypt.hash('institucion123', 10)
   const adminUser = await prisma.user.create({
     data: {
       email: 'admin@instituto-etchegoyen.edu.ar',
+      password: hashedAdminPassword,
       name: 'Administrador',
       role: 'ADMIN',
     },
@@ -277,9 +280,12 @@ async function main() {
   console.log('✅ Admin user created')
 
   // Create teacher users linked to their teacher profiles
+  const hashedTeacherPassword = await bcrypt.hash('profesor123', 10)
+  
   await prisma.user.create({
     data: {
       email: 'juan.perez@instituto-etchegoyen.edu.ar',
+      password: hashedTeacherPassword,
       name: 'Juan Pérez',
       role: 'TEACHER',
       teacherId: teacher1.id,
@@ -289,6 +295,7 @@ async function main() {
   await prisma.user.create({
     data: {
       email: 'maria.gonzalez@instituto-etchegoyen.edu.ar',
+      password: hashedTeacherPassword,
       name: 'María González',
       role: 'TEACHER',
       teacherId: teacher2.id,
@@ -298,6 +305,7 @@ async function main() {
   await prisma.user.create({
     data: {
       email: 'carlos.rodriguez@instituto-etchegoyen.edu.ar',
+      password: hashedTeacherPassword,
       name: 'Carlos Rodríguez',
       role: 'TEACHER',
       teacherId: teacher3.id,

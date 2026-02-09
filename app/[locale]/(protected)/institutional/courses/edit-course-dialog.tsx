@@ -45,7 +45,7 @@ export default function EditCourseDialog({ course, classrooms }: { course: Cours
           <Icon icon="heroicons-outline:pencil" className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('editCourse')}</DialogTitle>
         </DialogHeader>
@@ -65,7 +65,7 @@ export default function EditCourseDialog({ course, classrooms }: { course: Cours
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-2">
                 <Label htmlFor="shift" className="text-sm font-medium">
                   {t('shift')}

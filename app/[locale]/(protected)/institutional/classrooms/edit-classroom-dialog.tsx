@@ -34,7 +34,7 @@ export default function EditClassroomDialog({ classroom }: { classroom: Classroo
           <Icon icon="heroicons-outline:pencil" className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('editClassroom')}</DialogTitle>
         </DialogHeader>
