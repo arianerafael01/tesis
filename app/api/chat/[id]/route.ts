@@ -1,9 +1,12 @@
 import { NextResponse, NextRequest } from "next/server";
 import { chats, type Chat } from "../data";
 
-export async function POST(request: NextRequest, response: NextResponse) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    let id = "55fe838e-9a09-4caf-a591-559803309ef1"
+    const { id } = await params;
     let senderId = "e2c1a571-5f7e-4f56-9020-13f98b0eaba"
     let message ="ami n ew"
     let activeChat = chats.find((item) => item.id === id);

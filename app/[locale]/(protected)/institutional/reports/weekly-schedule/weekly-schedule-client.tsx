@@ -277,7 +277,7 @@ export default function WeeklyScheduleClient({ teachers }: { teachers: Teacher[]
           <Button
             onClick={handleUnassignAll}
             disabled={!hasTeachersWithAvailability}
-            variant="destructive"
+            color="destructive"
             className="gap-2"
           >
             <Icon icon="heroicons:x-circle" className="h-4 w-4" />

@@ -14,10 +14,11 @@ import ThumbSliderCom from "./thumb-slider";
 import ProductCounterButton from "@/components/ecommarce/product-counter-button";
 
 const ProductDetails = async ({
-  params: { id },
+  params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) => {
+  const { id } = await params;
   const product = await getProductById(id);
 
   if (!product)

@@ -27,7 +27,7 @@ export default function DeleteClassroomDialog({ classroomId, classroomName }: { 
         </DialogHeader>
         <DialogFooter>
           <form action={deleteClassroom.bind(null, classroomId)}>
-            <Button type="submit" variant="destructive">
+            <Button type="submit" color="destructive">
               {t('deleteClassroom')}
             </Button>
           </form>

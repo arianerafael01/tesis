@@ -20,7 +20,8 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Icon } from "@/components/ui/icon";
-const MailDetails = async ({ params: { id } }: { params: { id: string }; }) => {
+const MailDetails = async ({ params }: { params: Promise<{ id: string }> }) => {
+    const { id } = await params
     const mail = await getMailById(id)
     if (!mail) {
         return <Alert color="destructive"> Mail not found</Alert>

@@ -13,17 +13,11 @@ interface Course {
     id: string
     name: string
   }
-  coursesSubjects: {
-    subject: {
-      id: string
-      name: string
-    }
-    modules: number
-  }[]
+  subjects: any[]
 }
 
 export default async function CoursesPage() {
-  const courses = await prisma.course.findMany({
+  const coursesData = await prisma.course.findMany({
     include: {
       classroom: true,
       coursesSubjects: {
@@ -36,6 +30,11 @@ export default async function CoursesPage() {
       createdAt: 'desc'
     }
   })
+
+  const courses = coursesData.map(course => ({
+    ...course,
+    subjects: course.coursesSubjects
+  }))
 
   const classrooms = await prisma.classroom.findMany({
     select: {
