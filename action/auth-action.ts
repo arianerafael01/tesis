@@ -7,10 +7,13 @@ export const loginUser = async (data: any) => {
     const response = await signIn("credentials", {
       email: data.email,
       password: data.password,
-      redirectTo: "/es/institutional/reports/weekly-schedule",
+      redirect: false,
     });
     
-    // If we reach here without error, login was successful
+    if (response?.error) {
+      return { error: "Credenciales inválidas" };
+    }
+    
     return { success: true };
   } catch (error) {
     if (error instanceof AuthError) {
@@ -21,7 +24,6 @@ export const loginUser = async (data: any) => {
           return { error: "Error al iniciar sesión" };
       }
     }
-    // If it's a redirect (NEXT_REDIRECT), let it throw to trigger the redirect
-    throw error;
+    return { error: "Error al iniciar sesión" };
   }
 };

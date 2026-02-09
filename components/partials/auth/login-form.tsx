@@ -54,15 +54,12 @@ const LoginForm = () => {
           toast.error("Error de autenticación", {
             description: response.error || "Credenciales inválidas",
           })
+        } else if (response?.success) {
+          toast.success("Sesión iniciada correctamente");
+          // Use relative path for redirect to work in any environment
+          window.location.href = '/es/institutional/reports/weekly-schedule';
         }
-        // If successful, NextAuth will handle the redirect automatically
-        // No need to manually redirect here
       } catch (err: any) {
-        // Check if it's a redirect error (which is expected for successful login)
-        if (err.message?.includes('NEXT_REDIRECT')) {
-          // This is expected - NextAuth is redirecting after successful login
-          return;
-        }
         toast.error("Error al iniciar sesión", {
           description: err.message || "Ocurrió un error inesperado",
         });
