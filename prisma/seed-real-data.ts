@@ -28,17 +28,55 @@ async function main() {
     data: { name: 'Aula 102', classRoomType: 'theoretical' }
   })
 
+  const aula103 = await prisma.classroom.create({
+    data: { name: 'Aula 103', classRoomType: 'theoretical' }
+  })
+
+  const aula104 = await prisma.classroom.create({
+    data: { name: 'Aula 104', classRoomType: 'theoretical' }
+  })
+
+  const aula105 = await prisma.classroom.create({
+    data: { name: 'Aula 105', classRoomType: 'theoretical' }
+  })
+
+  const aula106 = await prisma.classroom.create({
+    data: { name: 'Aula 106', classRoomType: 'theoretical' }
+  })
+
   const taller1 = await prisma.classroom.create({
-    data: { name: 'Taller 1', classRoomType: 'Workshop' }
+    data: { name: 'Taller de Construcciones', classRoomType: 'Workshop' }
+  })
+
+  const gimnasio = await prisma.classroom.create({
+    data: { name: 'Gimnasio', classRoomType: 'Gym' }
   })
 
   const labInfo = await prisma.classroom.create({
-    data: { name: 'Laboratorio Informática', classRoomType: 'ComputerLab' }
+    data: { name: 'Laboratorio de Informática', classRoomType: 'ComputerLab' }
   })
 
   console.log('✅ Classrooms created')
 
   // Create courses from images
+  const curso1A = await prisma.course.create({
+    data: {
+      name: '1°A',
+      classRoomId: aula103.id,
+      shift: 'MorningShift',
+      cycle: '2025',
+    }
+  })
+
+  const curso1B = await prisma.course.create({
+    data: {
+      name: '1°B',
+      classRoomId: aula104.id,
+      shift: 'MorningShift',
+      cycle: '2025',
+    }
+  })
+
   const curso2A = await prisma.course.create({
     data: {
       name: '2°A',
@@ -52,6 +90,15 @@ async function main() {
     data: {
       name: '2°B',
       classRoomId: aula102.id,
+      shift: 'MorningShift',
+      cycle: '2025',
+    }
+  })
+
+  const curso3A = await prisma.course.create({
+    data: {
+      name: '3°A',
+      classRoomId: aula105.id,
       shift: 'MorningShift',
       cycle: '2025',
     }
@@ -145,6 +192,28 @@ async function main() {
 
   console.log('✅ Subjects created')
 
+  // Link subjects to courses (CourseSubject) - 1°A
+  await prisma.courseSubject.create({ data: { courseId: curso1A.id, subjectId: matematica.id, modules: 4 } })
+  await prisma.courseSubject.create({ data: { courseId: curso1A.id, subjectId: lengua.id, modules: 4 } })
+  await prisma.courseSubject.create({ data: { courseId: curso1A.id, subjectId: cienciasSociales.id, modules: 3 } })
+  await prisma.courseSubject.create({ data: { courseId: curso1A.id, subjectId: cienciasNaturales.id, modules: 2 } })
+  await prisma.courseSubject.create({ data: { courseId: curso1A.id, subjectId: cienciasNaturalesQuimica.id, modules: 2 } })
+  await prisma.courseSubject.create({ data: { courseId: curso1A.id, subjectId: lenguaExtranjera.id, modules: 3 } })
+  await prisma.courseSubject.create({ data: { courseId: curso1A.id, subjectId: edTecnologica.id, modules: 2 } })
+  await prisma.courseSubject.create({ data: { courseId: curso1A.id, subjectId: edArtistica.id, modules: 2 } })
+  await prisma.courseSubject.create({ data: { courseId: curso1A.id, subjectId: edFisica.id, modules: 2 } })
+
+  // 1°B
+  await prisma.courseSubject.create({ data: { courseId: curso1B.id, subjectId: matematica.id, modules: 4 } })
+  await prisma.courseSubject.create({ data: { courseId: curso1B.id, subjectId: lengua.id, modules: 4 } })
+  await prisma.courseSubject.create({ data: { courseId: curso1B.id, subjectId: cienciasSociales.id, modules: 3 } })
+  await prisma.courseSubject.create({ data: { courseId: curso1B.id, subjectId: cienciasNaturales.id, modules: 2 } })
+  await prisma.courseSubject.create({ data: { courseId: curso1B.id, subjectId: cienciasNaturalesQuimica.id, modules: 2 } })
+  await prisma.courseSubject.create({ data: { courseId: curso1B.id, subjectId: lenguaExtranjera.id, modules: 3 } })
+  await prisma.courseSubject.create({ data: { courseId: curso1B.id, subjectId: edTecnologica.id, modules: 2 } })
+  await prisma.courseSubject.create({ data: { courseId: curso1B.id, subjectId: edArtistica.id, modules: 2 } })
+  await prisma.courseSubject.create({ data: { courseId: curso1B.id, subjectId: edFisica.id, modules: 2 } })
+
   // Link subjects to courses (CourseSubject) - 2°A
   await prisma.courseSubject.create({ data: { courseId: curso2A.id, subjectId: matematica.id, modules: 4 } })
   await prisma.courseSubject.create({ data: { courseId: curso2A.id, subjectId: lengua.id, modules: 4 } })
@@ -166,6 +235,19 @@ async function main() {
   await prisma.courseSubject.create({ data: { courseId: curso2B.id, subjectId: cienciasNaturalesQuimica.id, modules: 2 } })
   await prisma.courseSubject.create({ data: { courseId: curso2B.id, subjectId: lenguaExtranjera.id, modules: 3 } })
   await prisma.courseSubject.create({ data: { courseId: curso2B.id, subjectId: edTecnologica.id, modules: 2 } })
+
+  // 3°A
+  await prisma.courseSubject.create({ data: { courseId: curso3A.id, subjectId: matematica.id, modules: 4 } })
+  await prisma.courseSubject.create({ data: { courseId: curso3A.id, subjectId: lengua.id, modules: 4 } })
+  await prisma.courseSubject.create({ data: { courseId: curso3A.id, subjectId: historia.id, modules: 3 } })
+  await prisma.courseSubject.create({ data: { courseId: curso3A.id, subjectId: geografia.id, modules: 2 } })
+  await prisma.courseSubject.create({ data: { courseId: curso3A.id, subjectId: biologia.id, modules: 2 } })
+  await prisma.courseSubject.create({ data: { courseId: curso3A.id, subjectId: fisica.id, modules: 2 } })
+  await prisma.courseSubject.create({ data: { courseId: curso3A.id, subjectId: quimica.id, modules: 2 } })
+  await prisma.courseSubject.create({ data: { courseId: curso3A.id, subjectId: ingles.id, modules: 3 } })
+  await prisma.courseSubject.create({ data: { courseId: curso3A.id, subjectId: edTecnologica.id, modules: 2 } })
+  await prisma.courseSubject.create({ data: { courseId: curso3A.id, subjectId: edArtistica.id, modules: 2 } })
+  await prisma.courseSubject.create({ data: { courseId: curso3A.id, subjectId: edFisica.id, modules: 2 } })
 
   // 4°U
   await prisma.courseSubject.create({ data: { courseId: curso4U.id, subjectId: historia.id, modules: 3 } })
@@ -802,7 +884,351 @@ async function main() {
     }
   })
 
+  // 2°B - Additional assignments
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherSorbellini.id,
+      subjectId: matematica.id,
+      courseId: curso2B.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherDestefanis.id,
+      subjectId: lengua.id,
+      courseId: curso2B.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherBodoira.id,
+      subjectId: cienciasSociales.id,
+      courseId: curso2B.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherBejarano.id,
+      subjectId: cienciasNaturales.id,
+      courseId: curso2B.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherCassini.id,
+      subjectId: cienciasNaturalesQuimica.id,
+      courseId: curso2B.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherBocco.id,
+      subjectId: edTecnologica.id,
+      courseId: curso2B.id,
+    }
+  })
+
+  // 5°U - Additional assignments
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherOlmos.id,
+      subjectId: matematica.id,
+      courseId: curso5U.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherDestefanis.id,
+      subjectId: lengua.id,
+      courseId: curso5U.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherBodoira.id,
+      subjectId: historia.id,
+      courseId: curso5U.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherBodoira.id,
+      subjectId: geografia.id,
+      courseId: curso5U.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherFerreyra.id,
+      subjectId: quimica.id,
+      courseId: curso5U.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherBellacrta.id,
+      subjectId: edArtisticaMusica.id,
+      courseId: curso5U.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherRomero.id,
+      subjectId: topografia.id,
+      courseId: curso5U.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherAnula.id,
+      subjectId: edFisica.id,
+      courseId: curso5U.id,
+    }
+  })
+
+  // 6°U - Additional assignments
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherSorbellini.id,
+      subjectId: analisisMatematico.id,
+      courseId: curso6U.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherDestefanis.id,
+      subjectId: lengua.id,
+      courseId: curso6U.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherDestefanis.id,
+      subjectId: filosofia.id,
+      courseId: curso6U.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherDestefanis.id,
+      subjectId: edArtisticaTeatro.id,
+      courseId: curso6U.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherRomero.id,
+      subjectId: estructurasII.id,
+      courseId: curso6U.id,
+    }
+  })
+
+  // 7°U - Additional assignments
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherCasas.id,
+      subjectId: tif.id,
+      courseId: curso7U.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherCasas.id,
+      subjectId: simbologia.id,
+      courseId: curso7U.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherCasas.id,
+      subjectId: marcoJuridico.id,
+      courseId: curso7U.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherCasas.id,
+      subjectId: higiene.id,
+      courseId: curso7U.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherBarraza.id,
+      subjectId: ingles6.id,
+      courseId: curso7U.id,
+    }
+  })
+
+  await prisma.subjectsTeacher.create({
+    data: {
+      teacherId: teacherFada.id,
+      subjectId: sismologia.id,
+      courseId: curso7U.id,
+    }
+  })
+
   console.log('✅ Teacher-Subject assignments created')
+
+  // Generate random availabilities for all teachers
+  // Time slots for morning shift (TM): 8 modules
+  const morningSlots = [
+    'Módulo 1 (7:30-8:10)',
+    'Módulo 2 (8:10-8:50)',
+    'Módulo 3 (9:00-9:40)',
+    'Módulo 4 (9:40-10:20)',
+    'Módulo 5 (10:30-11:10)',
+    'Módulo 6 (11:10-11:50)',
+    'Módulo 7 (12:00-12:40)',
+    'Módulo 8 (12:40-13:20)',
+  ]
+
+  // Time slots for afternoon shift (TT): 11 modules
+  const afternoonSlots = [
+    'Módulo 1 (12:00-12:40)',
+    'Módulo 2 (12:40-13:20)',
+    'Módulo 3 (13:20-14:10)',
+    'Módulo 4 (14:10-14:50)',
+    'Módulo 5 (15:00-15:40)',
+    'Módulo 6 (15:40-16:20)',
+    'Módulo 7 (16:30-17:10)',
+    'Módulo 8 (17:10-17:50)',
+    'Módulo 9 (18:00-18:40)',
+    'Módulo 10 (18:40-19:20)',
+    'Módulo 11 (19:30-20:10)',
+  ]
+
+  const days: Array<'M' | 'T' | 'W' | 'TH' | 'F'> = ['M', 'T', 'W', 'TH', 'F']
+
+  // Helper function to shuffle array
+  const shuffle = <T,>(array: T[]): T[] => {
+    const shuffled = [...array]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+    }
+    return shuffled
+  }
+
+  // Helper function to get random elements from array
+  const getRandomElements = <T,>(array: T[], count: number): T[] => {
+    return shuffle(array).slice(0, count)
+  }
+
+  // Get all teachers with their subject assignments
+  const teachersWithAssignments = await prisma.teacher.findMany({
+    include: {
+      subjectsTeachers: {
+        include: {
+          course: {
+            include: {
+              coursesSubjects: {
+                where: {
+                  subjectId: {
+                    in: await prisma.subjectsTeacher.findMany({
+                      select: { subjectId: true }
+                    }).then(results => results.map(r => r.subjectId))
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+
+  // Generate availabilities for each teacher
+  for (const teacher of teachersWithAssignments) {
+    if (teacher.subjectsTeachers.length === 0) continue
+
+    // Calculate total modules needed
+    let totalModulesNeeded = 0
+    const teacherCourses = new Set<string>()
+    
+    for (const assignment of teacher.subjectsTeachers) {
+      teacherCourses.add(assignment.courseId)
+      const courseSubject = assignment.course.coursesSubjects.find(
+        cs => cs.subjectId === assignment.subjectId
+      )
+      if (courseSubject) {
+        totalModulesNeeded += courseSubject.modules
+      }
+    }
+
+    // Determine if teacher works morning or afternoon shift based on courses
+    const courses = await prisma.course.findMany({
+      where: { id: { in: Array.from(teacherCourses) } }
+    })
+    
+    const hasMorningCourses = courses.some(c => c.shift === 'MorningShift')
+    const hasAfternoonCourses = courses.some(c => c.shift === 'LateShift')
+    
+    // Select appropriate time slots
+    let availableSlots = hasMorningCourses && !hasAfternoonCourses 
+      ? morningSlots 
+      : hasAfternoonCourses && !hasMorningCourses
+        ? afternoonSlots
+        : [...morningSlots, ...afternoonSlots] // Both shifts
+
+    // Add 20% more slots to ensure enough availability
+    const slotsNeeded = Math.ceil(totalModulesNeeded * 1.2)
+    
+    // Distribute slots across random days
+    const selectedDays = getRandomElements(days, Math.min(5, Math.ceil(slotsNeeded / 4)))
+    
+    for (const day of selectedDays) {
+      const slotsPerDay = Math.ceil(slotsNeeded / selectedDays.length)
+      const daySlots = getRandomElements(availableSlots, Math.min(slotsPerDay, availableSlots.length))
+      
+      if (daySlots.length === 0) continue
+
+      // Create availability for this day
+      const availability = await prisma.availability.create({
+        data: {
+          teacherId: teacher.id,
+          day: day,
+          timeRanges: daySlots
+        }
+      })
+
+      // Create teacher availability entries (without subject assignment)
+      for (const slot of daySlots) {
+        await prisma.teacherAvailability.create({
+          data: {
+            availabilityId: availability.id,
+            timeRange: slot,
+            subjectId: null,
+            courseId: null,
+          }
+        })
+      }
+    }
+
+    console.log(`  ✓ Generated ${slotsNeeded} slots for ${teacher.firstName} ${teacher.lastName} (needs ${totalModulesNeeded} modules)`)
+  }
+
+  console.log('✅ Teacher availabilities created')
 
   console.log('🎉 Database seeded successfully with real data!')
 }
