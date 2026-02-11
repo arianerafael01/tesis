@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -12,9 +12,11 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { createIncompatibilityDeclaration, updateIncompatibilityDeclaration, autoGenerateAvailability } from '@/app/[locale]/(protected)/institutional/teachers/incompatibility-actions'
 import { Icon } from '@iconify/react'
+import Image from 'next/image'
 
 type Day = 'M' | 'T' | 'W' | 'TH' | 'F'
 
@@ -82,6 +84,9 @@ export function IncompatibilityDeclarationDialog({
     return initial
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [scannedDocument, setScannedDocument] = useState<string | null>(null)
+  const [isScanning, setIsScanning] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const toggleSlot = (day: Day, timeRange: string) => {
     const key = `${day}-${timeRange}`
@@ -98,6 +103,38 @@ export function IncompatibilityDeclarationDialog({
     return selectedSlots.has(`${day}-${timeRange}`)
   }
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Por favor selecciona una imagen válida')
+      return
+    }
+
+    setIsScanning(true)
+    try {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setScannedDocument(reader.result as string)
+        toast.success('Documento escaneado correctamente')
+        setIsScanning(false)
+      }
+      reader.onerror = () => {
+        toast.error('Error al leer el archivo')
+        setIsScanning(false)
+      }
+      reader.readAsDataURL(file)
+    } catch (error) {
+      toast.error('Error al escanear el documento')
+      setIsScanning(false)
+    }
+  }
+
+  const handleScanClick = () => {
+    fileInputRef.current?.click()
+  }
+
   const handleSubmit = async () => {
     setIsSubmitting(true)
     try {
@@ -112,13 +149,15 @@ export function IncompatibilityDeclarationDialog({
       if (existingDeclaration) {
         await updateIncompatibilityDeclaration(
           existingDeclaration.id,
-          incompatibleSlots
+          incompatibleSlots,
+          scannedDocument || undefined
         )
         toast.success('Declaración jurada actualizada exitosamente')
       } else {
         await createIncompatibilityDeclaration(
           teacherId,
-          incompatibleSlots
+          incompatibleSlots,
+          scannedDocument || undefined
         )
         toast.success('Declaración jurada creada exitosamente')
       }
@@ -136,13 +175,13 @@ export function IncompatibilityDeclarationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Icon icon="heroicons-outline:document-text" className="w-5 h-5" />
             Declaración Jurada de Incompatibilidades
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             Profesor: <strong>{teacherName}</strong>
             <br />
             Seleccione los horarios en los que el profesor <strong>NO PUEDE</strong> dictar clases porque trabaja en otra institución.
@@ -151,69 +190,136 @@ export function IncompatibilityDeclarationDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="mb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <Input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleScanClick}
+              disabled={isScanning}
+              className="w-full sm:w-auto"
+            >
+              {isScanning ? (
+                <>
+                  <Icon icon="heroicons-outline:arrow-path" className="w-4 h-4 mr-2 animate-spin" />
+                  Escaneando...
+                </>
+              ) : (
+                <>
+                  <Icon icon="heroicons-outline:camera" className="w-4 h-4 mr-2" />
+                  Escanear DDJJ
+                </>
+              )}
+            </Button>
+            {scannedDocument && (
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-green-600 dark:text-green-400">
+                <Icon icon="heroicons-outline:check-circle" className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline">Documento escaneado</span>
+                <span className="sm:hidden">Escaneado</span>
+              </div>
+            )}
+          </div>
+          {scannedDocument && (
+            <div className="mt-3 border rounded-lg p-2 bg-muted/50">
+              <div className="relative w-full h-32 sm:h-48">
+                <Image
+                  src={scannedDocument}
+                  alt="Documento DDJJ escaneado"
+                  fill
+                  className="object-contain rounded"
+                />
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setScannedDocument(null)}
+                className="mt-2 w-full"
+              >
+                <Icon icon="heroicons-outline:trash" className="w-4 h-4 mr-2" />
+                Eliminar documento
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-4 sm:space-y-6">
           <div>
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <h3 className="font-semibold mb-2 sm:mb-3 flex items-center gap-2 text-sm sm:text-base">
               <Icon icon="heroicons-outline:sun" className="w-4 h-4" />
               Turno Mañana (TM)
             </h3>
-            <div className="grid grid-cols-6 gap-2">
-              <div className="font-medium text-sm">Horario</div>
-              {DAYS.map(day => (
-                <div key={day.value} className="font-medium text-sm text-center">
-                  {day.label}
-                </div>
-              ))}
-              
-              {MORNING_SLOTS.map(slot => (
-                <>
-                  <div key={slot} className="text-xs py-2">{slot}</div>
-                  {DAYS.map(day => (
-                    <div key={`${day.value}-${slot}`} className="flex items-center justify-center">
-                      <Checkbox
-                        checked={isSlotSelected(day.value, slot)}
-                        onCheckedChange={() => toggleSlot(day.value, slot)}
-                      />
-                    </div>
-                  ))}
-                </>
-              ))}
+            <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="grid grid-cols-6 gap-1 sm:gap-2 min-w-[500px] sm:min-w-0">
+                <div className="font-medium text-xs sm:text-sm py-1">Horario</div>
+                {DAYS.map(day => (
+                  <div key={day.value} className="font-medium text-xs sm:text-sm text-center py-1">
+                    {day.label}
+                  </div>
+                ))}
+                
+                {MORNING_SLOTS.map(slot => (
+                  <React.Fragment key={slot}>
+                    <div className="text-[10px] sm:text-xs py-1 sm:py-2 leading-tight">{slot}</div>
+                    {DAYS.map(day => (
+                      <div key={`${day.value}-${slot}`} className="flex items-center justify-center py-1">
+                        <Checkbox
+                          checked={isSlotSelected(day.value, slot)}
+                          onCheckedChange={() => toggleSlot(day.value, slot)}
+                          className="h-4 w-4 sm:h-5 sm:w-5"
+                        />
+                      </div>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </div>
             </div>
           </div>
 
           <div>
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
+            <h3 className="font-semibold mb-2 sm:mb-3 flex items-center gap-2 text-sm sm:text-base">
               <Icon icon="heroicons-outline:moon" className="w-4 h-4" />
               Turno Tarde (TT)
             </h3>
-            <div className="grid grid-cols-6 gap-2">
-              <div className="font-medium text-sm">Horario</div>
-              {DAYS.map(day => (
-                <div key={day.value} className="font-medium text-sm text-center">
-                  {day.label}
-                </div>
-              ))}
-              
-              {AFTERNOON_SLOTS.map(slot => (
-                <>
-                  <div key={slot} className="text-xs py-2">{slot}</div>
-                  {DAYS.map(day => (
-                    <div key={`${day.value}-${slot}`} className="flex items-center justify-center">
-                      <Checkbox
-                        checked={isSlotSelected(day.value, slot)}
-                        onCheckedChange={() => toggleSlot(day.value, slot)}
-                      />
-                    </div>
-                  ))}
-                </>
-              ))}
+            <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+              <div className="grid grid-cols-6 gap-1 sm:gap-2 min-w-[500px] sm:min-w-0">
+                <div className="font-medium text-xs sm:text-sm py-1">Horario</div>
+                {DAYS.map(day => (
+                  <div key={day.value} className="font-medium text-xs sm:text-sm text-center py-1">
+                    {day.label}
+                  </div>
+                ))}
+                
+                {AFTERNOON_SLOTS.map(slot => (
+                  <React.Fragment key={slot}>
+                    <div className="text-[10px] sm:text-xs py-1 sm:py-2 leading-tight">{slot}</div>
+                    {DAYS.map(day => (
+                      <div key={`${day.value}-${slot}`} className="flex items-center justify-center py-1">
+                        <Checkbox
+                          checked={isSlotSelected(day.value, slot)}
+                          onCheckedChange={() => toggleSlot(day.value, slot)}
+                          className="h-4 w-4 sm:h-5 sm:w-5"
+                        />
+                      </div>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="bg-amber-50 dark:bg-amber-950 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
+          <div className="bg-amber-50 dark:bg-amber-950 p-3 sm:p-4 rounded-lg border border-amber-200 dark:border-amber-800">
             <div className="flex items-start gap-2">
-              <Icon icon="heroicons-outline:exclamation-triangle" className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5" />
-              <div className="text-sm text-amber-800 dark:text-amber-200">
+              <Icon icon="heroicons-outline:exclamation-triangle" className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+              <div className="text-xs sm:text-sm text-amber-800 dark:text-amber-200">
                 <strong>Importante:</strong> Los horarios marcados son aquellos en los que el profesor <strong>NO PUEDE</strong> dar clases.
                 El sistema generará automáticamente la disponibilidad en todos los demás horarios.
               </div>
@@ -225,11 +331,11 @@ export function IncompatibilityDeclarationDialog({
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting} className="w-full sm:w-auto">
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
+          <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full sm:w-auto">
             {isSubmitting ? (
               <>
                 <Icon icon="heroicons-outline:arrow-path" className="w-4 h-4 mr-2 animate-spin" />
@@ -238,7 +344,8 @@ export function IncompatibilityDeclarationDialog({
             ) : (
               <>
                 <Icon icon="heroicons-outline:check" className="w-4 h-4 mr-2" />
-                Guardar y Generar Disponibilidad
+                <span className="hidden sm:inline">Guardar y Generar Disponibilidad</span>
+                <span className="sm:hidden">Guardar</span>
               </>
             )}
           </Button>
