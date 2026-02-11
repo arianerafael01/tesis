@@ -11,7 +11,7 @@ export default function DeleteTeacherDialog({ teacherId, teacherName }: { teache
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="icon">
           <Icon icon="heroicons-outline:trash" className="h-4 w-4" />
         </Button>
       </DialogTrigger>

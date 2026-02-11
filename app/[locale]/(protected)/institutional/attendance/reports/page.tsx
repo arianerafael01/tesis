@@ -64,7 +64,7 @@ export default async function AttendanceReportsPage() {
                     <TableCell className="text-center text-blue-600">{teacher.justified}</TableCell>
                     <TableCell className="text-right">
                       <Badge 
-                        variant={teacher.attendanceRate >= 95 ? 'default' : teacher.attendanceRate >= 85 ? 'secondary' : 'destructive'}
+                        color={teacher.attendanceRate >= 95 ? 'success' : teacher.attendanceRate >= 85 ? 'warning' : 'destructive'}
                         className="font-semibold"
                       >
                         {teacher.attendanceRate.toFixed(1)}%
