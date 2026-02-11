@@ -16,8 +16,8 @@ export function GoogleClassroomSync() {
   } | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const googleConnected = searchParams.get('google_connected')
-  const error = searchParams.get('error')
+  const googleConnected = searchParams?.get('google_connected')
+  const error = searchParams?.get('error')
 
   const handleConnect = () => {
     window.location.href = '/api/auth/google'
@@ -79,7 +79,7 @@ export function GoogleClassroomSync() {
         )}
 
         {error && (
-          <Alert variant="destructive">
+          <Alert color="destructive" variant="soft">
             <XCircle className="h-4 w-4" />
             <AlertDescription>
               Error de autenticación: {error}
