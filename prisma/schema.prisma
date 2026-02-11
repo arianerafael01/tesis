@@ -71,13 +71,16 @@ model Teacher {
   nationality  String   @db.VarChar(40)
   address      String   @db.VarChar(100)
   neighborhood String   @db.VarChar(100)
+  googleId     String?  @unique
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   // Relations
-  user             User?
-  subjectsTeachers SubjectsTeacher[]
-  availabilities   Availability[]
+  user                        User?
+  subjectsTeachers            SubjectsTeacher[]
+  availabilities              Availability[]
+  teacherAttendances          TeacherAttendance[]
+  incompatibilityDeclarations IncompatibilityDeclaration[]
 
   @@map("teachers")
 }
@@ -161,6 +164,8 @@ model Course {
   coursesSubjects       CourseSubject[]
   subjectsTeachers      SubjectsTeacher[]
   teacherAvailabilities TeacherAvailability[]
+  students              Student[]
+  studentAttendances    StudentAttendance[]
 
   @@map("courses")
 }
@@ -199,4 +204,102 @@ model TeacherAvailability {
 
   @@unique([availabilityId, timeRange])
   @@map("teacher_availabilities")
+}
+
+// Students table
+model Student {
+  id           String   @id @default(uuid())
+  firstName    String
+  lastName     String
+  idNumber     String   @unique @db.VarChar(20)
+  fileNumber   String   @db.VarChar(40)
+  birthdate    DateTime
+  nationality  String   @db.VarChar(40)
+  address      String   @db.VarChar(100)
+  neighborhood String   @db.VarChar(100)
+  email        String?  @unique
+  googleId     String?  @unique
+  courseId     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  course             Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  studentAttendances StudentAttendance[]
+
+  @@map("students")
+}
+
+// Teacher Attendance
+model TeacherAttendance {
+  id          String    @id @default(uuid())
+  teacherId   String
+  date        DateTime  @db.Date
+  status      AttendanceStatus @default(PRESENT)
+  justification String? @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, date])
+  @@map("teacher_attendances")
+}
+
+// Student Attendance
+model StudentAttendance {
+  id          String    @id @default(uuid())
+  studentId   String
+  courseId    String
+  date        DateTime  @db.Date
+  status      AttendanceStatus @default(PRESENT)
+  verifiedBy  String?   // Google ID of who verified (teacher or student themselves)
+  qrCodeUsed  Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, date])
+  @@map("student_attendances")
+}
+
+// Attendance Status Enum
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  JUSTIFIED
+}
+
+// Incompatibility Declaration - tracks time slots where teachers work at other schools
+model IncompatibilityDeclaration {
+  id              String   @id @default(uuid())
+  teacherId       String
+  documentUrl     String?  // URL to scanned declaration document
+  uploadedAt      DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Incompatible time slots (where teacher CANNOT teach)
+  incompatibilities IncompatibilitySlot[]
+  
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@map("incompatibility_declarations")
+}
+
+// Individual time slot where teacher is unavailable due to work at another school
+model IncompatibilitySlot {
+  id           String   @id @default(uuid())
+  declarationId String
+  day          Day
+  timeRange    String   @db.VarChar(100) // e.g., "Módulo 1 (7:30-8:10)"
+  createdAt    DateTime @default(now())
+  
+  declaration IncompatibilityDeclaration @relation(fields: [declarationId], references: [id], onDelete: Cascade)
+
+  @@map("incompatibility_slots")
 }

@@ -3,10 +3,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { useTranslations } from 'next-intl'
 import { useMemo, useState } from 'react'
 import EditTeacherDialog from './edit-teacher-dialog'
 import DeleteTeacherDialog from './delete-teacher-dialog'
+import { IncompatibilityDeclarationDialog } from '@/components/teachers/incompatibility-declaration-dialog'
+import { Icon } from '@iconify/react'
 
 interface Teacher {
   id: string
@@ -66,6 +69,8 @@ interface Subject {
 export default function TeachersTable({ teachers, availableSubjects }: { teachers: Teacher[], availableSubjects: Subject[] }) {
   const t = useTranslations('teachersPage')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null)
+  const [incompatibilityDialogOpen, setIncompatibilityDialogOpen] = useState(false)
+  const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null)
 
   const sortedTeachers = useMemo(() => {
     if (!sortOrder) return teachers
@@ -127,6 +132,17 @@ export default function TeachersTable({ teachers, availableSubjects }: { teacher
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        setSelectedTeacher(teacher)
+                        setIncompatibilityDialogOpen(true)
+                      }}
+                      title="Declaración Jurada de Incompatibilidades"
+                    >
+                      <Icon icon="heroicons-outline:document-text" className="w-4 h-4" />
+                    </Button>
                     <EditTeacherDialog teacher={teacher} availableSubjects={availableSubjects} />
                     <DeleteTeacherDialog teacherId={teacher.id} teacherName={`${teacher.firstName} ${teacher.lastName}`} />
                   </div>
@@ -136,6 +152,14 @@ export default function TeachersTable({ teachers, availableSubjects }: { teacher
           </TableBody>
         </Table>
       </CardContent>
+      {selectedTeacher && (
+        <IncompatibilityDeclarationDialog
+          teacherId={selectedTeacher.id}
+          teacherName={`${selectedTeacher.firstName} ${selectedTeacher.lastName}`}
+          open={incompatibilityDialogOpen}
+          onOpenChange={setIncompatibilityDialogOpen}
+        />
+      )}
     </Card>
   )
 } 

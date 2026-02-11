@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import TeachersClient from '../teachers-client'
 import TeachersTable from './teachers-table'
+import { GoogleClassroomSync } from '@/components/google-classroom-sync'
 
 interface Teacher {
   id: string
@@ -95,6 +96,7 @@ export default async function TeachersPage() {
 
   return (
     <div className="space-y-6">
+      <GoogleClassroomSync />
       <TeachersClient teachers={teachers} />
       <TeachersTable teachers={teachers} availableSubjects={availableSubjects} />
     </div>

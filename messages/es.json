@@ -265,7 +265,11 @@
     "classrooms": "Aulas",
     "weeklySchedule": "Grilla Semanal",
     "courseSchedule": "Currícula por Curso",
-    "reports": "Reportes"
+    "reports": "Reportes",
+    "attendance": "Asistencia",
+    "teacherAttendance": "Asistencia de Profesores",
+    "studentAttendance": "Asistencia de Alumnos",
+    "attendanceReports": "Reportes de Asistencia"
   },
   "teachersPage": {
     "title": "Profesores",

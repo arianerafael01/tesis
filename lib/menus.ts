@@ -93,6 +93,36 @@ export function getMenuList(pathname: string, t: any): Group[] {
         },
       ],
     },
+    {
+      groupLabel: t("attendance"),
+      id: "attendance",
+      menus: [
+        {
+          id: "teacherAttendance",
+          href: "/institutional/attendance/teachers",
+          label: t("teacherAttendance"),
+          active: pathname.includes("/institutional/attendance/teachers"),
+          icon: "heroicons-outline:clipboard-document-check",
+          submenus: [],
+        },
+        {
+          id: "studentAttendance",
+          href: "/institutional/attendance/students",
+          label: t("studentAttendance"),
+          active: pathname.includes("/institutional/attendance/students"),
+          icon: "heroicons-outline:qr-code",
+          submenus: [],
+        },
+        {
+          id: "attendanceReports",
+          href: "/institutional/attendance/reports",
+          label: t("attendanceReports"),
+          active: pathname.includes("/institutional/attendance/reports"),
+          icon: "heroicons-outline:chart-bar",
+          submenus: [],
+        },
+      ],
+    },
   ];
 }
 
@@ -155,6 +185,36 @@ export function getHorizontalMenuList(pathname: string, t: any): Group[] {
           label: t("teachers"),
           active: pathname.includes("/institutional/teachers"),
           icon: "heroicons-outline:user-group",
+          submenus: [],
+        },
+      ],
+    },
+    {
+      groupLabel: t("attendance"),
+      id: "attendance",
+      menus: [
+        {
+          id: "teacherAttendance",
+          href: "/institutional/attendance/teachers",
+          label: t("teacherAttendance"),
+          active: pathname.includes("/institutional/attendance/teachers"),
+          icon: "heroicons-outline:clipboard-document-check",
+          submenus: [],
+        },
+        {
+          id: "studentAttendance",
+          href: "/institutional/attendance/students",
+          label: t("studentAttendance"),
+          active: pathname.includes("/institutional/attendance/students"),
+          icon: "heroicons-outline:qr-code",
+          submenus: [],
+        },
+        {
+          id: "attendanceReports",
+          href: "/institutional/attendance/reports",
+          label: t("attendanceReports"),
+          active: pathname.includes("/institutional/attendance/reports"),
+          icon: "heroicons-outline:chart-bar",
           submenus: [],
         },
       ],

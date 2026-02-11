@@ -375,6 +375,39 @@ async function main() {
 
   console.log('✅ Teacher-Subject assignments created')
 
+  // Create sample students for testing attendance
+  const sampleStudents = [
+    { firstName: 'Juan', lastName: 'PÉREZ', courseId: curso1A.id },
+    { firstName: 'María', lastName: 'GONZÁLEZ', courseId: curso1A.id },
+    { firstName: 'Carlos', lastName: 'RODRÍGUEZ', courseId: curso1A.id },
+    { firstName: 'Ana', lastName: 'MARTÍNEZ', courseId: curso1B.id },
+    { firstName: 'Luis', lastName: 'FERNÁNDEZ', courseId: curso1B.id },
+    { firstName: 'Laura', lastName: 'LÓPEZ', courseId: curso1B.id },
+    { firstName: 'Pedro', lastName: 'GARCÍA', courseId: curso3A.id },
+    { firstName: 'Sofía', lastName: 'SÁNCHEZ', courseId: curso3A.id },
+    { firstName: 'Diego', lastName: 'RAMÍREZ', courseId: curso3A.id },
+  ]
+
+  for (let i = 0; i < sampleStudents.length; i++) {
+    const student = sampleStudents[i]
+    await prisma.student.create({
+      data: {
+        firstName: student.firstName,
+        lastName: student.lastName,
+        idNumber: `40000${i + 1}`.padStart(8, '0'),
+        fileNumber: `EST-${2000 + i}`,
+        birthdate: new Date('2010-01-01'),
+        nationality: 'Argentina',
+        address: 'Calle Estudiante 123',
+        neighborhood: 'Centro',
+        email: `${student.firstName.toLowerCase()}.${student.lastName.toLowerCase()}@estudiantes.edu.ar`,
+        courseId: student.courseId,
+      }
+    })
+  }
+
+  console.log('✅ Sample students created')
+
   // Generate random availabilities for all teachers
   // Time slots for morning shift (TM): 8 modules
   const morningSlots = [
