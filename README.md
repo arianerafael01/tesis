@@ -20,6 +20,52 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
+## Validación de Deployments
+
+Este proyecto incluye comandos para validar el código localmente antes de hacer deploy, evitando errores en Vercel:
+
+### Comandos Disponibles
+
+```bash
+# Verificar tipos TypeScript (igual que Vercel)
+npm run type-check
+
+# Verificar linting con ESLint
+npm run lint
+
+# Auto-corregir problemas de linting
+npm run lint:fix
+
+# Ejecutar validación completa (type-check + lint)
+npm run validate
+
+# Validación completa + build (simula el proceso de Vercel)
+npm run pre-deploy
+```
+
+### Workflow Recomendado
+
+1. **Antes de hacer commit:**
+   ```bash
+   npm run validate
+   ```
+
+2. **Antes de hacer deploy a Vercel:**
+   ```bash
+   npm run pre-deploy
+   ```
+
+3. **Si hay errores de build en Vercel:**
+   - Elimina el directorio `.next` localmente
+   - Ejecuta `npm run validate` para detectar errores
+
+### Configuración
+
+La configuración de TypeScript y ESLint para builds está en:
+- `next.config.mjs` - Control de strictness en builds
+- `tsconfig.json` - Configuración de TypeScript
+- Scripts en `package.json`
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
