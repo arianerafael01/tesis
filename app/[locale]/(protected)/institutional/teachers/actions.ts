@@ -572,6 +572,26 @@ export async function autoAssignSubjects(teacherId: string) {
   }
 
   // Build subject-course needs with module counts from CourseSubject
+  // OPTIMIZED: Fetch all CourseSubjects in a single query instead of N queries
+  const courseSubjectPairs = teacher.subjectsTeachers.map(st => ({
+    courseId: st.courseId,
+    subjectId: st.subjectId
+  }));
+  
+  const courseSubjects = await prisma.courseSubject.findMany({
+    where: {
+      OR: courseSubjectPairs.map(pair => ({
+        courseId: pair.courseId,
+        subjectId: pair.subjectId
+      }))
+    }
+  });
+  
+  // Create a map for O(1) lookups
+  const courseSubjectMap = new Map(
+    courseSubjects.map(cs => [`${cs.courseId}-${cs.subjectId}`, cs])
+  );
+  
   const subjectCourseNeeds: Array<{ 
     subjectId: string; 
     courseId: string; 
@@ -582,16 +602,8 @@ export async function autoAssignSubjects(teacherId: string) {
   }> = []
   
   for (const st of teacher.subjectsTeachers) {
-    // Get module count from CourseSubject
-    const courseSubject = await prisma.courseSubject.findUnique({
-      where: {
-        courseId_subjectId: {
-          courseId: st.courseId,
-          subjectId: st.subjectId
-        }
-      }
-    })
-
+    const courseSubject = courseSubjectMap.get(`${st.courseId}-${st.subjectId}`);
+    
     if (!courseSubject) continue
 
     // Count already assigned modules for this specific subject-course combination

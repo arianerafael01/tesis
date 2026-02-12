@@ -13,6 +13,7 @@
     "pre-deploy": "npm run validate && npm run build",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed-real": "tsx prisma/seed-real-data.ts",
+    "db:optimize": "tsx scripts/apply-performance-indexes.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
