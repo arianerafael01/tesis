@@ -7,15 +7,11 @@ const Logo = () => {
   return (
     <div>
       <Image
-        src={
-          mode === "light"
-            ? "/images/logo/logo.svg"
-            : "/images/logo/logo-white.svg"
-        }
-        alt=""
-        width={300}
-        height={300}
-        className=" w-36 "
+        src="/images/institutional-logo.png"
+        alt="Instituto Técnico Etchegoyen"
+        width={144}
+        height={144}
+        className="w-36"
       />
     </div>
   );

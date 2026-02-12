@@ -1,10 +1,9 @@
-
 import React from 'react'
 import SidebarContent from './sidebar-content'
 import { Menu } from './menu'
 
 
-const DashCodeSidebar = () => {
+const InstitutionalSidebar = () => {
     return (
         <SidebarContent>
             <Menu />
@@ -12,4 +11,4 @@ const DashCodeSidebar = () => {
     )
 }
 
-export default DashCodeSidebar
+export default InstitutionalSidebar
