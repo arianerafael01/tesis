@@ -15,7 +15,7 @@ const Logo = () => {
     const isDesktop = useMediaQuery('(min-width: 1280px)');
 
     if (config.sidebar === 'compact') {
-        return <Link href="/dashboard/analytics" className="flex gap-2 items-center justify-center">
+        return <Link href="/institutional/reports/weekly-schedule" className="flex gap-2 items-center justify-center">
             <Image
                 src="/images/institutional-logo.png"
                 alt="Instituto Técnico Etchegoyen"
@@ -28,7 +28,7 @@ const Logo = () => {
     if (config.sidebar === 'two-column' || !isDesktop) return null
 
     return (
-        <Link href="/dashboard/analytics" className="flex gap-2 items-center">
+        <Link href="/institutional/reports/weekly-schedule" className="flex gap-2 items-center">
             <Image
                 src="/images/institutional-logo.png"
                 alt="Instituto Técnico Etchegoyen"

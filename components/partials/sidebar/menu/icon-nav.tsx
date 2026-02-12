@@ -32,7 +32,7 @@ const IconNav = ({ menuList }: IconNavProps) => {
       )}
     >
       <div className="text-center py-5">
-        <Link href="/dashboard/analytics">
+        <Link href="/institutional/reports/weekly-schedule">
           <Image src="/images/institutional-logo.png" alt="Instituto Etchegoyen" width={32} height={32} className="h-8 w-8 object-contain mx-auto" />
         </Link>
       </div>

@@ -33,7 +33,7 @@ export function SheetMenu() {
             </SheetTrigger>
             <SheetContent className="sm:w-72 px-3 h-full flex flex-col" side="left">
                 <SheetHeader>
-                    <Link href="/dashboard/analytics" className="flex gap-2 items-center     ">
+                    <Link href="/institutional/reports/weekly-schedule" className="flex gap-2 items-center     ">
                         <Image src="/images/institutional-logo.png" alt="Instituto Etchegoyen" width={32} height={32} className="h-8 w-8 object-contain" />
                         <h1 className="text-xl font-semibold text-default-900 ">
                             Instituto Etchegoyen
