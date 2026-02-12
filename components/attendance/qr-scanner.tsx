@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -11,68 +11,75 @@ import { markStudentAttendanceWithQR } from '@/app/[locale]/(protected)/institut
 export function QRScanner() {
   const [scanning, setScanning] = useState(false)
   const [result, setResult] = useState<{ success: boolean; message: string } | null>(null)
-  const [scanner, setScanner] = useState<any>(null)
+  const scannerRef = useRef<any>(null)
+  const qrReaderRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     return () => {
-      if (scanner) {
-        scanner.stop()
+      if (scannerRef.current) {
+        scannerRef.current.stop().catch(() => {})
       }
     }
-  }, [scanner])
+  }, [])
 
   const startScanning = async () => {
     setScanning(true)
     setResult(null)
 
     try {
-      const { Html5QrcodeScanner } = await import('html5-qrcode')
+      const { Html5Qrcode } = await import('html5-qrcode')
       
-      const qrScanner = new Html5QrcodeScanner(
-        'qr-reader',
-        { 
-          fps: 10, 
-          qrbox: { width: 250, height: 250 },
-          aspectRatio: 1.0,
-        },
-        false
-      )
+      const qrScanner = new Html5Qrcode('qr-reader')
+      scannerRef.current = qrScanner
 
-      qrScanner.render(
+      await qrScanner.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+        },
         async (decodedText) => {
           try {
+            await qrScanner.stop()
             await markStudentAttendanceWithQR(decodedText)
             setResult({
               success: true,
               message: '¡Asistencia registrada correctamente!',
             })
             toast.success('Asistencia registrada')
-            qrScanner.clear()
             setScanning(false)
+            scannerRef.current = null
           } catch (error: any) {
             setResult({
               success: false,
               message: error.message || 'Error al registrar asistencia',
             })
             toast.error(error.message)
+            await qrScanner.stop()
+            setScanning(false)
+            scannerRef.current = null
           }
         },
         (error) => {
-          console.log('QR scan error:', error)
+          // Silently ignore decode errors
         }
       )
-
-      setScanner(qrScanner)
-    } catch (error) {
-      toast.error('Error al iniciar la cámara')
+    } catch (error: any) {
+      console.error('Camera error:', error)
+      toast.error('Error al iniciar la cámara. Verifica los permisos.')
       setScanning(false)
+      scannerRef.current = null
     }
   }
 
-  const stopScanning = () => {
-    if (scanner) {
-      scanner.clear()
-      setScanner(null)
+  const stopScanning = async () => {
+    if (scannerRef.current) {
+      try {
+        await scannerRef.current.stop()
+      } catch (error) {
+        console.error('Error stopping scanner:', error)
+      }
+      scannerRef.current = null
     }
     setScanning(false)
   }
@@ -98,7 +105,7 @@ export function QRScanner() {
 
         {scanning && (
           <>
-            <div id="qr-reader" className="w-full"></div>
+            <div id="qr-reader" ref={qrReaderRef} className="w-full"></div>
             <Button onClick={stopScanning} variant="outline" className="w-full">
               Cancelar
             </Button>

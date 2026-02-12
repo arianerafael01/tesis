@@ -4,7 +4,7 @@ import React from 'react'
 
 const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return (
-        <SessionProvider>
+        <SessionProvider basePath="/api/auth">
             {children}
         </SessionProvider>
     )

@@ -6,6 +6,7 @@ import { prisma } from "./prisma";
 import * as bcrypt from "bcryptjs";
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
+  basePath: "/api/auth",
   session: {
     strategy: "jwt",
   },
