@@ -4,10 +4,16 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, CheckCircle2, XCircle, Cloud } from 'lucide-react'
+import { Loader2, CheckCircle2, XCircle, Cloud, Lock } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { SUBSCRIPTION_MESSAGES } from '@/lib/subscription'
 
-export function GoogleClassroomSync() {
+interface GoogleClassroomSyncProps {
+  hasSubscription?: boolean
+}
+
+export function GoogleClassroomSync({ hasSubscription = false }: GoogleClassroomSyncProps) {
   const [syncing, setSyncing] = useState(false)
   const [result, setResult] = useState<{
     success: boolean
@@ -113,33 +119,74 @@ export function GoogleClassroomSync() {
           </Alert>
         )}
 
-        <div className="flex gap-2">
-          <Button
-            onClick={handleConnect}
-            variant="outline"
-            className="flex-1"
-          >
-            <Cloud className="mr-2 h-4 w-4" />
-            Conectar con Google
-          </Button>
+        {!hasSubscription && (
+          <Alert color="warning" variant="soft">
+            <Lock className="h-4 w-4" />
+            <AlertDescription>
+              <div className="font-semibold">{SUBSCRIPTION_MESSAGES.googleClassroomSync.title}</div>
+              <div className="text-xs mt-1">{SUBSCRIPTION_MESSAGES.googleClassroomSync.description}</div>
+            </AlertDescription>
+          </Alert>
+        )}
 
-          <Button
-            onClick={handleSync}
-            disabled={syncing}
-            className="flex-1"
-          >
-            {syncing ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sincronizando...
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                Sincronizar Profesores
-              </>
-            )}
-          </Button>
+        <div className="flex gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex-1">
+                  <Button
+                    onClick={handleConnect}
+                    variant="outline"
+                    className="w-full"
+                    disabled={!hasSubscription}
+                  >
+                    {!hasSubscription && <Lock className="mr-2 h-4 w-4" />}
+                    {hasSubscription && <Cloud className="mr-2 h-4 w-4" />}
+                    Conectar con Google
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              {!hasSubscription && (
+                <TooltipContent>
+                  <p>{SUBSCRIPTION_MESSAGES.googleClassroomSync.shortMessage}</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex-1">
+                  <Button
+                    onClick={handleSync}
+                    disabled={syncing || !hasSubscription}
+                    className="w-full"
+                  >
+                    {!hasSubscription && <Lock className="mr-2 h-4 w-4" />}
+                    {hasSubscription && syncing ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sincronizando...
+                      </>
+                    ) : hasSubscription ? (
+                      <>
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        Sincronizar Profesores
+                      </>
+                    ) : (
+                      'Sincronizar Profesores'
+                    )}
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              {!hasSubscription && (
+                <TooltipContent>
+                  <p>{SUBSCRIPTION_MESSAGES.googleClassroomSync.shortMessage}</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
         </div>
 
         <div className="text-xs text-muted-foreground space-y-1">

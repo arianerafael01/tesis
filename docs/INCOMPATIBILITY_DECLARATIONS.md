@@ -1,6 +1,19 @@
-# Sistema de Declaraciones Juradas de Incompatibilidades
+# Sistema de Declaración Jurada de Incompatibilidades
 
-Sistema para gestionar los horarios en los que los profesores **NO PUEDEN** dictar clases porque trabajan en otras instituciones educativas.
+## 🌍 Alcance del Sistema
+
+**Provincia:** Córdoba, Argentina
+
+Este sistema está diseñado específicamente para el formato de Declaración Jurada de Incompatibilidades utilizado en la provincia de Córdoba, según:
+- **Decreto Ley 214 E-63** y **Decreto Reglamentario 3489/63**
+- Formato oficial: "Régimen de Incompatibilidades - Gobierno de Córdoba"
+- Documentos emitidos por la Dirección General de Institutos Privados de Enseñanza
+
+El sistema de OCR está optimizado para reconocer este formato específico de documento.
+
+## 📋 Descripción General
+
+El sistema de Declaración Jurada de Incompatibilidades permite gestionar los horarios en los que un profesor **NO PUEDE** dar clases en la institución debido a que trabaja en otros establecimientos educativos.
 
 ## 📋 Concepto
 

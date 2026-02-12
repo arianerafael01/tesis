@@ -17,7 +17,7 @@ import { toast } from 'sonner'
 import { createIncompatibilityDeclaration, updateIncompatibilityDeclaration, autoGenerateAvailability } from '@/app/[locale]/(protected)/institutional/teachers/incompatibility-actions'
 import { Icon } from '@iconify/react'
 import Image from 'next/image'
-import { processImageWithOCR, mapSchedulesToIncompatibilities, parseScheduleFromOCR } from '@/lib/ocr-utils'
+import { processImageWithOCR, mapSchedulesToIncompatibilities, parseScheduleFromOCR, extractTeacherDataFromDDJJ, validateTeacherData } from '@/lib/ocr-utils'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
 
@@ -26,6 +26,9 @@ type Day = 'M' | 'T' | 'W' | 'TH' | 'F'
 interface IncompatibilityDeclarationDialogProps {
   teacherId: string
   teacherName: string
+  teacherDNI: string
+  teacherFirstName: string
+  teacherLastName: string
   existingDeclaration?: {
     id: string
     incompatibilities: Array<{
@@ -73,6 +76,9 @@ const AFTERNOON_SLOTS = [
 export function IncompatibilityDeclarationDialog({
   teacherId,
   teacherName,
+  teacherDNI,
+  teacherFirstName,
+  teacherLastName,
   existingDeclaration,
   open,
   onOpenChange,
@@ -92,6 +98,7 @@ export function IncompatibilityDeclarationDialog({
   const [isProcessingOCR, setIsProcessingOCR] = useState(false)
   const [ocrProgress, setOcrProgress] = useState(0)
   const [ocrResults, setOcrResults] = useState<string | null>(null)
+  const [validationErrors, setValidationErrors] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const toggleSlot = (day: Day, timeRange: string) => {
@@ -146,6 +153,7 @@ export function IncompatibilityDeclarationDialog({
     setIsProcessingOCR(true)
     setOcrProgress(0)
     setOcrResults(null)
+    setValidationErrors([])
 
     try {
       toast.info('Procesando documento con OCR...')
@@ -156,6 +164,31 @@ export function IncompatibilityDeclarationDialog({
 
       console.log('OCR Text Extracted:', result.text)
       setOcrResults(result.text)
+      
+      // Extract and validate teacher data from DDJJ
+      const extractedData = extractTeacherDataFromDDJJ(result.text)
+      console.log('Teacher data extracted:', extractedData)
+      
+      const validation = validateTeacherData(extractedData, {
+        dni: teacherDNI,
+        firstName: teacherFirstName,
+        lastName: teacherLastName
+      })
+      
+      console.log('Validation result:', validation)
+      
+      if (!validation.isValid) {
+        setValidationErrors(validation.errors)
+        toast.error('El documento no corresponde a este profesor', {
+          duration: 6000
+        })
+        setIsProcessingOCR(false)
+        return
+      }
+      
+      toast.success('Documento validado correctamente', {
+        duration: 3000
+      })
       
       // Parse the OCR text to extract schedules
       const schedules = parseScheduleFromOCR(result.text)
@@ -325,7 +358,20 @@ export function IncompatibilityDeclarationDialog({
               <Progress value={ocrProgress} className="h-2" />
             </div>
           )}
-          {ocrResults && !isProcessingOCR && (
+          {validationErrors.length > 0 && (
+            <Alert color="destructive" variant="soft" className="mt-3">
+              <Icon icon="heroicons-outline:exclamation-triangle" className="w-4 h-4" />
+              <AlertDescription className="text-xs">
+                <div className="font-semibold mb-1">El documento no puede ser importado:</div>
+                <ul className="list-disc list-inside space-y-1">
+                  {validationErrors.map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+          {ocrResults && !isProcessingOCR && validationErrors.length === 0 && (
             <Alert color="info" variant="soft" className="mt-3">
               <Icon icon="heroicons-outline:information-circle" className="w-4 h-4" />
               <AlertDescription className="text-xs">

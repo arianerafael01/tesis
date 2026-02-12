@@ -156,6 +156,9 @@ export default function TeachersTable({ teachers, availableSubjects }: { teacher
         <IncompatibilityDeclarationDialog
           teacherId={selectedTeacher.id}
           teacherName={`${selectedTeacher.firstName} ${selectedTeacher.lastName}`}
+          teacherDNI={selectedTeacher.idNumber}
+          teacherFirstName={selectedTeacher.firstName}
+          teacherLastName={selectedTeacher.lastName}
           open={incompatibilityDialogOpen}
           onOpenChange={setIncompatibilityDialogOpen}
         />

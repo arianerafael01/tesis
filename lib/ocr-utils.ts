@@ -12,6 +12,12 @@ export interface DetectedSchedule {
   confidence: number
 }
 
+export interface TeacherDataFromDDJJ {
+  dni: string | null
+  fullName: string | null
+  confidence: number
+}
+
 /**
  * Process image with OCR to extract text
  */
@@ -363,4 +369,86 @@ export function expandTimeRangeToModules(
 function timeToMinutes(time: string): number {
   const [hours, minutes] = time.split(':').map(Number)
   return hours * 60 + minutes
+}
+
+/**
+ * Extract teacher personal data (DNI and name) from DDJJ OCR text
+ */
+export function extractTeacherDataFromDDJJ(ocrText: string): TeacherDataFromDDJJ {
+  const lines = ocrText.split('\n').filter(line => line.trim())
+  
+  let dni: string | null = null
+  let fullName: string | null = null
+  let confidence = 0
+  
+  for (const line of lines) {
+    // Extract DNI - pattern: "DNI (N° y Tipo) XX.XXX.XXX" or "24.992.613"
+    const dniPattern = /DNI[^0-9]*(\d{1,2}[\.\s]?\d{3}[\.\s]?\d{3})/i
+    const dniMatch = line.match(dniPattern)
+    if (dniMatch) {
+      // Remove dots and spaces, keep only numbers
+      dni = dniMatch[1].replace(/[\.\s]/g, '')
+      confidence += 0.5
+      console.log('DNI extracted:', dni)
+    }
+    
+    // Extract full name - pattern: "APELLIDO Y NOMBRE: SURNAME NAME"
+    const namePattern = /APELLIDO\s+Y\s+NOMBRE:\s*([A-ZÁÉÍÓÚÑ\s]+?)[\.\-]/i
+    const nameMatch = line.match(namePattern)
+    if (nameMatch) {
+      fullName = nameMatch[1].trim()
+      confidence += 0.5
+      console.log('Full name extracted:', fullName)
+    }
+  }
+  
+  return {
+    dni,
+    fullName,
+    confidence
+  }
+}
+
+/**
+ * Validate if extracted teacher data matches system data
+ */
+export function validateTeacherData(
+  extracted: TeacherDataFromDDJJ,
+  systemTeacher: { dni: string; firstName: string; lastName: string }
+): { isValid: boolean; errors: string[] } {
+  const errors: string[] = []
+  
+  // Validate DNI
+  if (extracted.dni) {
+    const extractedDNI = extracted.dni.replace(/[\.\s]/g, '')
+    const systemDNI = systemTeacher.dni.replace(/[\.\s]/g, '')
+    
+    if (extractedDNI !== systemDNI) {
+      errors.push(`El DNI del documento (${extracted.dni}) no coincide con el DNI del sistema (${systemTeacher.dni})`)
+    }
+  } else {
+    errors.push('No se pudo extraer el DNI del documento')
+  }
+  
+  // Validate name (more flexible - check if system name is contained in extracted name)
+  if (extracted.fullName) {
+    const extractedNameUpper = extracted.fullName.toUpperCase()
+    const systemLastNameUpper = systemTeacher.lastName.toUpperCase()
+    const systemFirstNameUpper = systemTeacher.firstName.toUpperCase()
+    
+    // Check if both last name and first name appear in the extracted text
+    const hasLastName = extractedNameUpper.includes(systemLastNameUpper)
+    const hasFirstName = extractedNameUpper.includes(systemFirstNameUpper)
+    
+    if (!hasLastName || !hasFirstName) {
+      errors.push(`El nombre del documento (${extracted.fullName}) no coincide con el nombre del sistema (${systemTeacher.lastName} ${systemTeacher.firstName})`)
+    }
+  } else {
+    errors.push('No se pudo extraer el nombre del documento')
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  }
 }

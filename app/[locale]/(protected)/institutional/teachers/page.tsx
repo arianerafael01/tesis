@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma'
 import TeachersClient from '../teachers-client'
 import TeachersTable from './teachers-table'
 import { GoogleClassroomSync } from '@/components/google-classroom-sync'
+import { auth } from '@/lib/auth'
+import { hasGoogleClassroomAccess } from '@/lib/subscription'
 
 interface Teacher {
   id: string
@@ -32,6 +34,9 @@ interface Teacher {
 }
 
 export default async function TeachersPage() {
+  const session = await auth()
+  const hasSubscription = session?.user ? hasGoogleClassroomAccess(session.user) : false
+  
   const teachers = await prisma.teacher.findMany({
     include: {
       subjectsTeachers: {
@@ -96,7 +101,7 @@ export default async function TeachersPage() {
 
   return (
     <div className="space-y-6">
-      <GoogleClassroomSync />
+      <GoogleClassroomSync hasSubscription={hasSubscription} />
       <TeachersClient teachers={teachers} />
       <TeachersTable teachers={teachers} availableSubjects={availableSubjects} />
     </div>
