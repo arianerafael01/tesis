@@ -57,9 +57,9 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
             id: user.id,
             email: user.email,
             name: user.name,
-            image: user.image,
             role: user.role,
             teacherId: user.teacherId,
+            hasGoogleClassroomSubscription: user.hasGoogleClassroomSubscription,
           };
         } catch (error) {
           console.error("Auth error:", error);
@@ -75,6 +75,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         token.id = user.id;
         token.role = user.role;
         token.teacherId = user.teacherId;
+        token.hasGoogleClassroomSubscription = user.hasGoogleClassroomSubscription;
       }
       return token;
     },
@@ -84,6 +85,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         session.user.id = token.id as string;
         session.user.role = token.role as "ADMIN" | "TEACHER";
         session.user.teacherId = token.teacherId as string | null;
+        session.user.hasGoogleClassroomSubscription = token.hasGoogleClassroomSubscription as boolean;
       }
       return session;
     },
