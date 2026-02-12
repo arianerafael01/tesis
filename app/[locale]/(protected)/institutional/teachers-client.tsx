@@ -10,6 +10,7 @@ import { useTranslations } from 'next-intl'
 import { useState } from 'react'
 import { useRouter } from '@/components/navigation'
 import { createTeacher, updateTeacher, deleteTeacher } from './teachers/actions'
+import { downloadIncompatibilityTemplate } from '@/lib/incompatibility-template-generator'
 
 interface Teacher {
   id: string
@@ -36,7 +37,17 @@ export default function TeachersClient({ teachers }: { teachers: Teacher[] }) {
           {t('description')}
         </p>
       </div>
-      <AddTeacherDialog />
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          onClick={downloadIncompatibilityTemplate}
+          className="gap-2"
+        >
+          <Icon icon="heroicons-outline:document-arrow-down" className="h-4 w-4" />
+          Descargar Modelo DDJJ
+        </Button>
+        <AddTeacherDialog />
+      </div>
     </div>
   )
 }
