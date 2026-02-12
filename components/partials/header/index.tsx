@@ -3,7 +3,6 @@ import HeaderContent from './header-content'
 import HeaderSearch from './header-search'
 import ProfileInfo from './profile-info'
 import Notifications from './notifications'
-import Messages from "./messages"
 import { Cart } from './cart'
 import ThemeSwitcher from './theme-switcher'
 import { SidebarToggle } from '@/components/partials/sidebar/sidebar-toggle'

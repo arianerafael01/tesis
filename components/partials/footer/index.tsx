@@ -11,23 +11,6 @@ const DashCodeFooter = async () => {
         <FooterContent>
 
             <div className='flex md:hidden justify-around items-center'>
-                <Link href="/app/chat" className="text-default-600">
-                    <div>
-                        <span
-                            className="relative cursor-pointer rounded-full text-[20px] flex flex-col items-center justify-center mb-1"
-                        >
-                            <Icon icon="heroicons-outline:mail" />
-                            <span className="absolute right-[5px] lg:top-0 -top-2 h-4 w-4 bg-red-500 text-[8px] font-semibold flex flex-col items-center justify-center rounded-full text-white z-99">
-                                10
-                            </span>
-                        </span>
-                        <span
-                            className="block text-xs text-default-600"
-                        >
-                            Messages
-                        </span>
-                    </div>
-                </Link>
                 <Link
                     href="profile"
                     className="relative bg-card bg-no-repeat backdrop-filter backdrop-blur-[40px] rounded-full footer-bg dark:bg-default-300 h-[65px] w-[65px] z-[-1] -mt-[40px] flex justify-center items-center"

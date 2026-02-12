@@ -85,14 +85,6 @@ const HeaderSearch = () => {
                                 className="[&_[cmdk-group-heading]]:text-sm [&_[cmdk-group-heading]]:font-normal [&_[cmdk-group-heading]]:text-default-400 [&_[cmdk-group-heading]]:mb-2.5 [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-widest">
                                 <CommandItem className="aria-selected:bg-transparent p-0 mb-2.5">
                                     <Link
-                                        href="/chat"
-                                        className="flex gap-1 items-center px-2 text-default-500 hover:text-primary">
-                                        <Icon icon="heroicons:chat-bubble-bottom-center" />
-                                        <span>Chat</span>
-                                    </Link>
-                                </CommandItem>
-                                <CommandItem className="aria-selected:bg-transparent p-0 mb-2.5">
-                                    <Link
                                         href="/email"
                                         className="flex gap-1 items-center px-2 text-default-500 hover:text-primary">
                                         <Icon icon="heroicons:envelope" />
