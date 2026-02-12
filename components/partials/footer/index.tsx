@@ -12,7 +12,7 @@ const DashCodeFooter = async () => {
 
             <div className='flex md:hidden justify-around items-center'>
                 <Link
-                    href="profile"
+                    href="/profile"
                     className="relative bg-card bg-no-repeat backdrop-filter backdrop-blur-[40px] rounded-full footer-bg dark:bg-default-300 h-[65px] w-[65px] z-[-1] -mt-[40px] flex justify-center items-center"
                 >
                     <div className="h-[50px] w-[50px] rounded-full relative left-[0px] top-[0px] custom-dropshadow">
@@ -27,7 +27,7 @@ const DashCodeFooter = async () => {
                         />
                     </div>
                 </Link>
-                <Link href="notifications">
+                <Link href="/notifications">
                     <div>
                         <span
                             className="relative cursor-pointer rounded-full text-[20px] flex flex-col items-center justify-center mb-1"
