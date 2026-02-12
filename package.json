@@ -7,6 +7,10 @@
     "build": "prisma generate && prisma migrate deploy && next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "type-check": "tsc --noEmit",
+    "validate": "npm run type-check && npm run lint",
+    "pre-deploy": "npm run validate && npm run build",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed-real": "tsx prisma/seed-real-data.ts",
     "postinstall": "prisma generate"

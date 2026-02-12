@@ -10,6 +10,21 @@ const withNextra = nextra({
   themeConfig: "./theme.config.tsx",
 });
 const nextConfig = {
+  // TypeScript configuration
+  typescript: {
+    // Set to true to ignore type errors during build (NOT RECOMMENDED for production)
+    // ignoreBuildErrors: false, // Default: false - fails build on type errors
+  },
+  
+  // ESLint configuration
+  eslint: {
+    // Set to true to ignore ESLint errors during build (NOT RECOMMENDED for production)
+    // ignoreDuringBuilds: false, // Default: false - fails build on lint errors
+    
+    // Specify directories to lint
+    dirs: ['app', 'components', 'lib', 'hooks', 'providers', 'action'],
+  },
+  
   images: {
     remotePatterns: [
       {
