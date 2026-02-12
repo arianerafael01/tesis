@@ -22,7 +22,7 @@ const Register2 = () => {
                 <div className="text-center 2xl:mb-10 mb-5">
                   <h4 className="font-medium">Sign up</h4>
                   <div className="text-default-500  text-base">
-                    Create an account to start using Dashcode
+                    Crear cuenta para acceder al sistema
                   </div>
                 </div>
                 <RegForm />

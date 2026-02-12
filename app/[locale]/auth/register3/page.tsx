@@ -41,7 +41,7 @@ const Register3 = () => {
                   Sign up
                 </h4>
                 <div className="text-default-500  text-base">
-                  Create an account to start using Dashcode
+                  Crear cuenta para acceder al sistema
                 </div>
               </div>
               <RegForm />

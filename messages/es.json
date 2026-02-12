@@ -3,8 +3,8 @@
     "title": "Hello world!"
   },
   "AnalyticsDashboard": {
-    "widget_title": "Upgrade your Dashcode",
-    "widget_desc": "Pro plan for better results",
+    "widget_title": "Instituto Etchegoyen",
+    "widget_desc": "Sistema de Gestión Institucional",
     "widget_badge": "now",
     "revenue_chart_title": "Total Revenue",
     "revenue_report": "Revenue Report",
@@ -23,8 +23,8 @@
     "last_year": "Last year"
   },
   "BankingDashboard": {
-    "widget_title": "Good evening",
-    "widget_desc": "Welcome to Dashcode",
+    "widget_title": "Buenas tardes",
+    "widget_desc": "Bienvenido al Instituto Etchegoyen",
     "current_balance": "Current balance",
     "credit": "Credit",
     "debit": "Debit",
@@ -42,8 +42,8 @@
     "account_payable": "Account Payable"
   },
   "EcommerceDashboard": {
-    "widget_title": "Good evening",
-    "widget_desc": "Welcome to Dashcode",
+    "widget_title": "Buenas tardes",
+    "widget_desc": "Bienvenido al Instituto Etchegoyen",
     "revenue_chart_title": "Total Revenue",
     "revenue_report": "Revenue Report",
     "sold_chart_title": "Products sold",

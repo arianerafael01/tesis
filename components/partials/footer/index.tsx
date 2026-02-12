@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { Icon } from "@/components/ui/icon";
 import { auth } from '@/lib/auth'
 
-const DashCodeFooter = async () => {
+const InstitutionalFooter = async () => {
     const session = await auth()
     return (
         <FooterContent>
@@ -50,4 +50,4 @@ const DashCodeFooter = async () => {
     )
 }
 
-export default DashCodeFooter
+export default InstitutionalFooter
