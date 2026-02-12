@@ -228,10 +228,10 @@ export function mapSchedulesToIncompatibilities(
       const [start, end] = schedule.timeSlots
       const modules = expandTimeRangeToModules(start, end)
       
-      for (const module of modules) {
+      for (const timeModule of modules) {
         incompatibilities.push({
           day: schedule.day,
-          timeRange: module,
+          timeRange: timeModule,
         })
       }
     } else {
@@ -346,8 +346,8 @@ export function expandTimeRangeToModules(
   const startTime = timeToMinutes(start)
   const endTime = timeToMinutes(end)
   
-  for (const module of allModules) {
-    const match = module.match(/\((\d{1,2}:\d{2})-(\d{1,2}:\d{2})\)/)
+  for (const timeModule of allModules) {
+    const match = timeModule.match(/\((\d{1,2}:\d{2})-(\d{1,2}:\d{2})\)/)
     if (match) {
       const moduleStart = timeToMinutes(match[1])
       const moduleEnd = timeToMinutes(match[2])
@@ -355,7 +355,7 @@ export function expandTimeRangeToModules(
       // Check if module overlaps with the range (any overlap counts)
       // Module overlaps if: moduleStart < endTime AND moduleEnd > startTime
       if (moduleStart < endTime && moduleEnd > startTime) {
-        modules.push(module)
+        modules.push(timeModule)
       }
     }
   }
