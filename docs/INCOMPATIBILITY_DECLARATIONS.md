@@ -53,19 +53,44 @@ model IncompatibilitySlot {
 
 ### **2. Cargar Horarios Incompatibles**
 
-El diálogo muestra una grilla completa con:
+El sistema ofrece **dos métodos** para cargar los horarios:
+
+#### **Método 1: Detección Automática con OCR (Recomendado)**
+
+1. **Escanear el documento:**
+   - Haz clic en **"Escanear DDJJ"**
+   - Toma una foto del documento o selecciona una imagen
+   - El documento se mostrará como vista previa
+
+2. **Auto-detectar horarios:**
+   - Haz clic en **"Auto-detectar"** (botón con ✨)
+   - El sistema procesará la imagen con OCR (Tesseract.js)
+   - Verás una barra de progreso durante el procesamiento
+   - Los horarios detectados se marcarán automáticamente en la grilla
+
+3. **Revisar y ajustar:**
+   - Verifica que los horarios detectados sean correctos
+   - Agrega o quita horarios manualmente si es necesario
+   - Los checkboxes permiten corrección manual
+
+#### **Método 2: Entrada Manual**
+
+1. **Marcar manualmente:**
+   - Marca con checkboxes los horarios incompatibles
+   - Donde el profesor NO puede dar clases
+   - Representa cuando trabaja en otra institución
+
+**Grilla de Horarios:**
 - **Turno Mañana (TM):** 8 módulos (7:30-13:20)
 - **Turno Tarde (TT):** 11 módulos (12:00-20:10)
 - **Días:** Lunes a Viernes
 
-**Pasos:**
-
-1. **Marca los horarios incompatibles** (donde el profesor NO puede dar clases)
-2. Los horarios marcados representan cuando el profesor trabaja en otra institución
-3. Haz clic en **"Guardar y Generar Disponibilidad"**
+**Guardar:**
+- Haz clic en **"Guardar y Generar Disponibilidad"**
 
 **Resultado:**
 - ✅ Se guardan los horarios incompatibles
+- ✅ Se almacena la imagen del documento escaneado
 - ✅ Se genera automáticamente la disponibilidad del profesor
 - ✅ La disponibilidad incluye TODOS los horarios NO marcados
 
@@ -274,11 +299,39 @@ const mondayIncompatibilities = await prisma.incompatibilitySlot.findMany({
 - ✅ **Eficiencia:** Ahorra tiempo al no tener que cargar manualmente cada horario disponible
 - ✅ **Flexibilidad:** Fácil actualización cuando cambian las circunstancias del profesor
 
+## 🤖 Tecnología OCR
+
+### **Sistema Híbrido Implementado:**
+
+El sistema utiliza **Tesseract.js** para reconocimiento óptico de caracteres (OCR):
+
+**Características:**
+- ✅ Procesamiento en el navegador (sin servidor)
+- ✅ Soporte para español
+- ✅ Barra de progreso en tiempo real
+- ✅ Detección automática de horarios
+- ✅ Corrección manual disponible
+
+**Proceso de OCR:**
+1. **Extracción de texto:** Tesseract.js lee el documento escaneado
+2. **Parsing inteligente:** Detecta días (Lunes-Viernes) y horarios (HH:MM)
+3. **Mapeo a módulos:** Convierte horarios a módulos del sistema
+4. **Auto-selección:** Marca automáticamente los slots en la grilla
+5. **Revisión manual:** Usuario puede ajustar resultados
+
+**Precisión:**
+- ⚠️ La precisión depende de la calidad de la imagen
+- 💡 Recomendación: Foto clara, bien iluminada, sin sombras
+- ✅ Siempre permite corrección manual
+
 ## 🔮 Mejoras Futuras
 
-- [ ] Subir documento escaneado de la declaración jurada
-- [ ] OCR para extraer horarios automáticamente del documento
+- [x] Subir documento escaneado de la declaración jurada
+- [x] OCR para extraer horarios automáticamente del documento
+- [ ] Mejorar precisión de OCR con preprocesamiento de imagen
+- [ ] Detección de tablas con visión por computadora
 - [ ] Notificaciones cuando hay conflictos con asignaciones existentes
 - [ ] Historial de declaraciones juradas
 - [ ] Exportar declaración a PDF
 - [ ] Portal para que profesores carguen su propia declaración
+- [ ] Integración con Google Cloud Vision API (mayor precisión)

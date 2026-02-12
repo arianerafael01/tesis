@@ -17,6 +17,9 @@ import { toast } from 'sonner'
 import { createIncompatibilityDeclaration, updateIncompatibilityDeclaration, autoGenerateAvailability } from '@/app/[locale]/(protected)/institutional/teachers/incompatibility-actions'
 import { Icon } from '@iconify/react'
 import Image from 'next/image'
+import { processImageWithOCR, mapSchedulesToIncompatibilities, parseScheduleFromOCR } from '@/lib/ocr-utils'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Progress } from '@/components/ui/progress'
 
 type Day = 'M' | 'T' | 'W' | 'TH' | 'F'
 
@@ -86,6 +89,9 @@ export function IncompatibilityDeclarationDialog({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [scannedDocument, setScannedDocument] = useState<string | null>(null)
   const [isScanning, setIsScanning] = useState(false)
+  const [isProcessingOCR, setIsProcessingOCR] = useState(false)
+  const [ocrProgress, setOcrProgress] = useState(0)
+  const [ocrResults, setOcrResults] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const toggleSlot = (day: Day, timeRange: string) => {
@@ -128,6 +134,68 @@ export function IncompatibilityDeclarationDialog({
     } catch (error) {
       toast.error('Error al escanear el documento')
       setIsScanning(false)
+    }
+  }
+
+  const handleAutoDetect = async () => {
+    if (!scannedDocument) {
+      toast.error('Primero debes escanear un documento')
+      return
+    }
+
+    setIsProcessingOCR(true)
+    setOcrProgress(0)
+    setOcrResults(null)
+
+    try {
+      toast.info('Procesando documento con OCR...')
+      
+      const result = await processImageWithOCR(scannedDocument, (progress) => {
+        setOcrProgress(progress)
+      })
+
+      console.log('OCR Text Extracted:', result.text)
+      setOcrResults(result.text)
+      
+      // Parse the OCR text to extract schedules
+      const schedules = parseScheduleFromOCR(result.text)
+      console.log('Schedules Detected:', schedules)
+      
+      if (schedules.length === 0) {
+        toast.warning('No se detectaron horarios automáticamente. Revisa el texto extraído en la consola y marca los horarios manualmente.', {
+          duration: 5000
+        })
+        setIsProcessingOCR(false)
+        return
+      }
+
+      // Map schedules to incompatibility slots
+      const incompatibilities = mapSchedulesToIncompatibilities(schedules)
+      console.log('Incompatibilities Mapped:', incompatibilities)
+      
+      if (incompatibilities.length === 0) {
+        toast.warning('Se detectaron horarios pero no se pudieron mapear a módulos del sistema. Por favor, márcalos manualmente.', {
+          duration: 5000
+        })
+        setIsProcessingOCR(false)
+        return
+      }
+      
+      // Add detected slots to selection
+      const newSet = new Set(selectedSlots)
+      incompatibilities.forEach(slot => {
+        newSet.add(`${slot.day}-${slot.timeRange}`)
+      })
+      setSelectedSlots(newSet)
+
+      toast.success(`Se detectaron ${incompatibilities.length} horarios incompatibles automáticamente. Revisa y ajusta si es necesario.`, {
+        duration: 5000
+      })
+      setIsProcessingOCR(false)
+    } catch (error: any) {
+      console.error('OCR Error:', error)
+      toast.error(error.message || 'Error al procesar el documento con OCR')
+      setIsProcessingOCR(false)
     }
   }
 
@@ -204,7 +272,7 @@ export function IncompatibilityDeclarationDialog({
               type="button"
               variant="outline"
               onClick={handleScanClick}
-              disabled={isScanning}
+              disabled={isScanning || isProcessingOCR}
               className="w-full sm:w-auto"
             >
               {isScanning ? (
@@ -220,13 +288,51 @@ export function IncompatibilityDeclarationDialog({
               )}
             </Button>
             {scannedDocument && (
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-green-600 dark:text-green-400">
-                <Icon icon="heroicons-outline:check-circle" className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="hidden sm:inline">Documento escaneado</span>
-                <span className="sm:hidden">Escaneado</span>
-              </div>
+              <>
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-green-600 dark:text-green-400">
+                  <Icon icon="heroicons-outline:check-circle" className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="hidden sm:inline">Documento escaneado</span>
+                  <span className="sm:hidden">Escaneado</span>
+                </div>
+                <Button
+                  type="button"
+                  variant="default"
+                  onClick={handleAutoDetect}
+                  disabled={isProcessingOCR}
+                  className="w-full sm:w-auto"
+                >
+                  {isProcessingOCR ? (
+                    <>
+                      <Icon icon="heroicons-outline:arrow-path" className="w-4 h-4 mr-2 animate-spin" />
+                      Procesando...
+                    </>
+                  ) : (
+                    <>
+                      <Icon icon="heroicons-outline:sparkles" className="w-4 h-4 mr-2" />
+                      Auto-detectar
+                    </>
+                  )}
+                </Button>
+              </>
             )}
           </div>
+          {isProcessingOCR && (
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span>Procesando con OCR...</span>
+                <span>{ocrProgress}%</span>
+              </div>
+              <Progress value={ocrProgress} className="h-2" />
+            </div>
+          )}
+          {ocrResults && !isProcessingOCR && (
+            <Alert color="info" variant="soft" className="mt-3">
+              <Icon icon="heroicons-outline:information-circle" className="w-4 h-4" />
+              <AlertDescription className="text-xs">
+                OCR completado. Revisa los horarios detectados y ajusta manualmente si es necesario.
+              </AlertDescription>
+            </Alert>
+          )}
           {scannedDocument && (
             <div className="mt-3 border rounded-lg p-2 bg-muted/50">
               <div className="relative w-full h-32 sm:h-48">

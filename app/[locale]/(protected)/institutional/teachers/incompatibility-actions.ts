@@ -205,27 +205,47 @@ async function generateAvailabilityFromIncompatibilities(teacherId: string) {
     where: { teacherId }
   })
 
-  const availabilityData = []
+  // Group available time ranges by day
+  const availabilityByDay: Record<Day, string[]> = {
+    M: [],
+    T: [],
+    W: [],
+    TH: [],
+    F: []
+  }
+
   for (const day of days) {
     for (const timeRange of allSlots) {
       const key = `${day}-${timeRange}`
       if (!incompatibleSet.has(key)) {
-        availabilityData.push({
-          teacherId,
-          day,
-          timeRange,
-        })
+        availabilityByDay[day].push(timeRange)
       }
     }
   }
 
-  if (availabilityData.length > 0) {
-    await prisma.availability.createMany({
-      data: availabilityData
-    })
+  // Create one Availability record per day with array of timeRanges
+  const availabilityData = []
+  let totalSlots = 0
+  for (const day of days) {
+    if (availabilityByDay[day].length > 0) {
+      availabilityData.push({
+        teacherId,
+        day,
+        timeRanges: availabilityByDay[day]
+      })
+      totalSlots += availabilityByDay[day].length
+    }
   }
 
-  return { success: true, availabilitiesCreated: availabilityData.length }
+  if (availabilityData.length > 0) {
+    for (const data of availabilityData) {
+      await prisma.availability.create({
+        data
+      })
+    }
+  }
+
+  return { success: true, availabilitiesCreated: totalSlots }
 }
 
 export async function autoGenerateAvailability(teacherId: string) {
