@@ -23,6 +23,7 @@ const InstitutionalHeader = async () => {
                 <div className="nav-tools flex items-center  md:gap-4 gap-3">
                     <LocalSwitcher />
                     <ThemeSwitcher />
+                    <Notifications />
                     <ProfileInfo />
                     <SheetMenu />
                 </div>

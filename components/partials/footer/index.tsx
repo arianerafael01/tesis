@@ -4,9 +4,12 @@ import { Link } from "@/components/navigation"
 import Image from 'next/image'
 import { Icon } from "@/components/ui/icon";
 import { auth } from '@/lib/auth'
+import { notifications } from '@/components/partials/header/data'
 
 const InstitutionalFooter = async () => {
     const session = await auth()
+    const unreadCount = notifications.filter(n => n.unreadmessage).length;
+    
     return (
         <FooterContent>
 
@@ -33,14 +36,16 @@ const InstitutionalFooter = async () => {
                             className="relative cursor-pointer rounded-full text-[20px] flex flex-col items-center justify-center mb-1"
                         >
                             <Icon icon="heroicons-outline:bell" />
-                            <span className="absolute right-[17px] lg:top-0 -top-2 h-4 w-4 bg-red-500 text-[8px] font-semibold flex flex-col items-center justify-center rounded-full text-white z-99">
-                                2
-                            </span>
+                            {unreadCount > 0 && (
+                                <span className="absolute right-[17px] lg:top-0 -top-2 h-4 w-4 bg-red-500 text-[8px] font-semibold flex flex-col items-center justify-center rounded-full text-white z-99">
+                                    {unreadCount}
+                                </span>
+                            )}
                         </span>
                         <span
                             className="block text-xs text-default-600"
                         >
-                            Notifications
+                            Notificaciones
                         </span>
                     </div>
                 </Link>
