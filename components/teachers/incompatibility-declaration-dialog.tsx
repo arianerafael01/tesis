@@ -61,17 +61,15 @@ const MORNING_SLOTS = [
 ]
 
 const AFTERNOON_SLOTS = [
-  'Módulo 1 (12:00-12:40)',
-  'Módulo 2 (12:40-13:20)',
-  'Módulo 3 (13:20-14:10)',
-  'Módulo 4 (14:10-14:50)',
-  'Módulo 5 (15:00-15:40)',
-  'Módulo 6 (15:40-16:20)',
-  'Módulo 7 (16:30-17:10)',
-  'Módulo 8 (17:10-17:50)',
-  'Módulo 9 (18:00-18:40)',
-  'Módulo 10 (18:40-19:20)',
-  'Módulo 11 (19:30-20:10)',
+  'Módulo 9 (13:20-14:10)',
+  'Módulo 10 (14:10-14:50)',
+  'Módulo 11 (15:00-15:40)',
+  'Módulo 12 (15:40-16:20)',
+  'Módulo 13 (16:30-17:10)',
+  'Módulo 14 (17:10-17:50)',
+  'Módulo 15 (18:00-18:40)',
+  'Módulo 16 (18:40-19:20)',
+  'Módulo 17 (19:30-20:10)',
 ]
 
 export function IncompatibilityDeclarationDialog({
@@ -128,6 +126,35 @@ export function IncompatibilityDeclarationDialog({
 
   const isSlotSelected = (day: Day, timeRange: string) => {
     return selectedSlots.has(`${day}-${timeRange}`)
+  }
+
+  const toggleShift = (day: Day, shift: 'morning' | 'afternoon') => {
+    const slots = shift === 'morning' ? MORNING_SLOTS : AFTERNOON_SLOTS
+    const newSet = new Set(selectedSlots)
+    
+    // Check if all slots of this shift are already selected
+    const allSelected = slots.every(slot => newSet.has(`${day}-${slot}`))
+    
+    if (allSelected) {
+      // Unselect all slots of this shift
+      slots.forEach(slot => newSet.delete(`${day}-${slot}`))
+    } else {
+      // Select all slots of this shift
+      slots.forEach(slot => newSet.add(`${day}-${slot}`))
+    }
+    
+    setSelectedSlots(newSet)
+  }
+
+  const isShiftSelected = (day: Day, shift: 'morning' | 'afternoon') => {
+    const slots = shift === 'morning' ? MORNING_SLOTS : AFTERNOON_SLOTS
+    return slots.every(slot => selectedSlots.has(`${day}-${slot}`))
+  }
+
+  const isShiftPartiallySelected = (day: Day, shift: 'morning' | 'afternoon') => {
+    const slots = shift === 'morning' ? MORNING_SLOTS : AFTERNOON_SLOTS
+    const selectedCount = slots.filter(slot => selectedSlots.has(`${day}-${slot}`)).length
+    return selectedCount > 0 && selectedCount < slots.length
   }
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -280,10 +307,16 @@ export function IncompatibilityDeclarationDialog({
       const result = await autoGenerateAvailability(teacherId)
       toast.success(`Disponibilidad generada: ${result.availabilitiesCreated} horarios disponibles`)
       
-      // Refresh the page to load updated data
+      // Close dialog first
+      onOpenChange(false)
+      
+      // Force multiple refreshes to ensure all pages update
       router.refresh()
       
-      onOpenChange(false)
+      // Wait a bit and refresh again to ensure propagation
+      setTimeout(() => {
+        router.refresh()
+      }, 100)
     } catch (error: any) {
       toast.error(error.message || 'Error al guardar la declaración jurada')
     } finally {
@@ -385,16 +418,26 @@ export function IncompatibilityDeclarationDialog({
 
         <div className="space-y-3">
           <div>
-            <h3 className="font-semibold mb-1.5 flex items-center gap-1.5 text-sm">
-              <Icon icon="heroicons-outline:sun" className="w-4 h-4" />
-              Turno Mañana
-            </h3>
+            <div className="flex items-center justify-between mb-1.5">
+              <h3 className="font-semibold flex items-center gap-1.5 text-sm">
+                <Icon icon="heroicons-outline:sun" className="w-4 h-4" />
+                Turno Mañana
+              </h3>
+            </div>
             <div className="border rounded-md overflow-hidden">
               <div className="grid grid-cols-6 gap-0 text-xs">
                 <div className="font-medium py-1 px-1 bg-muted/50 border-b">Horario</div>
                 {DAYS.map(day => (
                   <div key={day.value} className="font-medium text-center py-1 px-1 bg-muted/50 border-b border-l">
-                    {day.label}
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span>{day.label}</span>
+                      <Checkbox
+                        checked={isShiftSelected(day.value, 'morning')}
+                        onCheckedChange={() => toggleShift(day.value, 'morning')}
+                        className="h-3 w-3"
+                        title="Marcar/desmarcar todo el turno mañana"
+                      />
+                    </div>
                   </div>
                 ))}
                 
@@ -417,16 +460,26 @@ export function IncompatibilityDeclarationDialog({
           </div>
 
           <div>
-            <h3 className="font-semibold mb-1.5 flex items-center gap-1.5 text-sm">
-              <Icon icon="heroicons-outline:moon" className="w-4 h-4" />
-              Turno Tarde
-            </h3>
+            <div className="flex items-center justify-between mb-1.5">
+              <h3 className="font-semibold flex items-center gap-1.5 text-sm">
+                <Icon icon="heroicons-outline:moon" className="w-4 h-4" />
+                Turno Tarde
+              </h3>
+            </div>
             <div className="border rounded-md overflow-hidden">
               <div className="grid grid-cols-6 gap-0 text-xs">
                 <div className="font-medium py-1 px-1 bg-muted/50 border-b">Horario</div>
                 {DAYS.map(day => (
                   <div key={day.value} className="font-medium text-center py-1 px-1 bg-muted/50 border-b border-l">
-                    {day.label}
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span>{day.label}</span>
+                      <Checkbox
+                        checked={isShiftSelected(day.value, 'afternoon')}
+                        onCheckedChange={() => toggleShift(day.value, 'afternoon')}
+                        className="h-3 w-3"
+                        title="Marcar/desmarcar todo el turno tarde"
+                      />
+                    </div>
                   </div>
                 ))}
                 

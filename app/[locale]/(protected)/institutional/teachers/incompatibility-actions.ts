@@ -42,6 +42,7 @@ export async function createIncompatibilityDeclaration(
     await generateAvailabilityFromIncompatibilities(teacherId)
 
     revalidatePath('/institutional/teachers')
+    revalidatePath('/institutional/reports/weekly-schedule')
     return { success: true, declaration }
   } catch (error: any) {
     console.error('Error creating incompatibility declaration:', error)
@@ -92,6 +93,7 @@ export async function updateIncompatibilityDeclaration(
     await generateAvailabilityFromIncompatibilities(declaration.teacherId)
 
     revalidatePath('/institutional/teachers')
+    revalidatePath('/institutional/reports/weekly-schedule')
     return { success: true, declaration: updated }
   } catch (error: any) {
     console.error('Error updating incompatibility declaration:', error)
@@ -155,33 +157,26 @@ export async function getIncompatibilityDeclaration(teacherId: string) {
 }
 
 async function generateAvailabilityFromIncompatibilities(teacherId: string) {
-  const allTimeSlots = {
-    morningSlots: [
-      'Módulo 1 (7:30-8:10)',
-      'Módulo 2 (8:10-8:50)',
-      'Módulo 3 (9:00-9:40)',
-      'Módulo 4 (9:40-10:20)',
-      'Módulo 5 (10:30-11:10)',
-      'Módulo 6 (11:10-11:50)',
-      'Módulo 7 (12:00-12:40)',
-      'Módulo 8 (12:40-13:20)',
-    ],
-    afternoonSlots: [
-      'Módulo 1 (12:00-12:40)',
-      'Módulo 2 (12:40-13:20)',
-      'Módulo 3 (13:20-14:10)',
-      'Módulo 4 (14:10-14:50)',
-      'Módulo 5 (15:00-15:40)',
-      'Módulo 6 (15:40-16:20)',
-      'Módulo 7 (16:30-17:10)',
-      'Módulo 8 (17:10-17:50)',
-      'Módulo 9 (18:00-18:40)',
-      'Módulo 10 (18:40-19:20)',
-      'Módulo 11 (19:30-20:10)',
-    ]
-  }
-
-  const allSlots = [...allTimeSlots.morningSlots, ...allTimeSlots.afternoonSlots]
+  // Use unique slots only - avoid duplicates between morning and afternoon
+  const allSlots = [
+    'Módulo 1 (7:30-8:10)',
+    'Módulo 2 (8:10-8:50)',
+    'Módulo 3 (9:00-9:40)',
+    'Módulo 4 (9:40-10:20)',
+    'Módulo 5 (10:30-11:10)',
+    'Módulo 6 (11:10-11:50)',
+    'Módulo 7 (12:00-12:40)',
+    'Módulo 8 (12:40-13:20)',
+    'Módulo 9 (13:20-14:10)',
+    'Módulo 10 (14:10-14:50)',
+    'Módulo 11 (15:00-15:40)',
+    'Módulo 12 (15:40-16:20)',
+    'Módulo 13 (16:30-17:10)',
+    'Módulo 14 (17:10-17:50)',
+    'Módulo 15 (18:00-18:40)',
+    'Módulo 16 (18:40-19:20)',
+    'Módulo 17 (19:30-20:10)',
+  ]
   const days: Day[] = ['M', 'T', 'W', 'TH', 'F']
 
   const declaration = await prisma.incompatibilityDeclaration.findFirst({
@@ -258,6 +253,7 @@ export async function autoGenerateAvailability(teacherId: string) {
   try {
     const result = await generateAvailabilityFromIncompatibilities(teacherId)
     revalidatePath('/institutional/teachers')
+    revalidatePath('/institutional/reports/weekly-schedule')
     return result
   } catch (error: any) {
     console.error('Error auto-generating availability:', error)

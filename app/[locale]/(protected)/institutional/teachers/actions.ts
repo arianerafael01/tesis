@@ -512,21 +512,40 @@ export async function autoAssignSubjects(teacherId: string) {
   const getContiguousSlots = (day: string, count: number, availableSlotsByDay: Map<string, Array<{ timeRange: string; availabilityId: string; index: number }>>) => {
     const daySlots = availableSlotsByDay.get(day) || []
     
+    // Define shift boundaries
+    // Morning shift: Módulos 1-8 (indices 0-7)
+    // Afternoon shift: Módulos 9-17 (indices 8-16)
+    const MORNING_END = 7  // Last index of morning shift
+    const AFTERNOON_START = 8  // First index of afternoon shift
+    
     for (let i = 0; i <= daySlots.length - count; i++) {
       const slots = daySlots.slice(i, i + count)
+      
       // Check if slots are contiguous (consecutive indices)
-      // Also ensure no large gaps (which would indicate crossing from tarde to mañana)
       const isContiguous = slots.every((slot, idx) => {
         if (idx === 0) return true
         const diff = slot.index - slots[idx - 1].index
         // Only consecutive (diff === 1) are truly contiguous
-        // A diff > 1 means there's a gap (like going from Módulo 17 to Módulo 1)
         return diff === 1
       })
       
-      if (isContiguous) {
-        return slots
+      if (!isContiguous) continue
+      
+      // Check if slots stay within the same shift
+      const firstIndex = slots[0].index
+      const lastIndex = slots[slots.length - 1].index
+      
+      // If starting in morning shift, must end in morning shift
+      if (firstIndex <= MORNING_END && lastIndex > MORNING_END) {
+        continue  // Crosses from morning to afternoon
       }
+      
+      // If starting in afternoon shift, must end in afternoon shift (cannot wrap to next day)
+      if (firstIndex >= AFTERNOON_START && lastIndex > 16) {
+        continue  // Would exceed afternoon shift
+      }
+      
+      return slots
     }
     return null
   }

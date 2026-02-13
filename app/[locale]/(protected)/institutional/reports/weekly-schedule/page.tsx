@@ -4,6 +4,10 @@ import { getCurrentUser } from '@/lib/permissions'
 import { redirect } from 'next/navigation'
 import { getScheduleConfigs } from './schedule-config-actions'
 
+// Disable caching for this page to ensure fresh data
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function WeeklySchedulePage() {
   const user = await getCurrentUser()
   

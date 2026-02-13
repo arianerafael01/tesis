@@ -110,6 +110,12 @@ export default function WeeklyScheduleClient({
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('all')
   const [isAutoAssigning, setIsAutoAssigning] = useState(false)
 
+  // Helper function to normalize time format (remove leading zeros)
+  const normalizeTime = (time: string) => {
+    // Remove leading zero from hours (09:00 -> 9:00)
+    return time.replace(/^0(\d):/, '$1:')
+  }
+
   // Generate TIME_SLOTS dynamically from active schedule configurations
   const TIME_SLOTS = useMemo(() => {
     const slots: string[] = []
@@ -121,14 +127,18 @@ export default function WeeklyScheduleClient({
     // Add morning shift modules
     if (morningConfig) {
       morningConfig.modules.forEach(mod => {
-        slots.push(`Módulo ${mod.moduleNumber} (${mod.startTime}-${mod.endTime})`)
+        const startTime = normalizeTime(mod.startTime)
+        const endTime = normalizeTime(mod.endTime)
+        slots.push(`Módulo ${mod.moduleNumber} (${startTime}-${endTime})`)
       })
     }
     
     // Add afternoon shift modules
     if (afternoonConfig) {
       afternoonConfig.modules.forEach(mod => {
-        slots.push(`Módulo ${mod.moduleNumber} (${mod.startTime}-${mod.endTime})`)
+        const startTime = normalizeTime(mod.startTime)
+        const endTime = normalizeTime(mod.endTime)
+        slots.push(`Módulo ${mod.moduleNumber} (${startTime}-${endTime})`)
       })
     }
     
