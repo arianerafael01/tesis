@@ -303,3 +303,46 @@ model IncompatibilitySlot {
 
   @@map("incompatibility_slots")
 }
+
+// School Schedule Configuration - allows customizing module times and breaks
+model SchoolScheduleConfig {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(100) // e.g., "Turno Mañana", "Turno Tarde"
+  shift       Shift    // MorningShift or LateShift
+  startTime   String   @db.VarChar(10) // e.g., "7:30", "13:20"
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  modules     ScheduleModule[]
+  breaks      ScheduleBreak[]
+
+  @@map("school_schedule_configs")
+}
+
+// Individual module configuration (40 minutes each)
+model ScheduleModule {
+  id          String   @id @default(uuid())
+  configId    String
+  moduleNumber Int     // 1, 2, 3, etc.
+  startTime   String   @db.VarChar(10) // Calculated based on previous modules and breaks
+  endTime     String   @db.VarChar(10) // startTime + 40 minutes
+  
+  config      SchoolScheduleConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@unique([configId, moduleNumber])
+  @@map("schedule_modules")
+}
+
+// Break configuration between modules
+model ScheduleBreak {
+  id              String   @id @default(uuid())
+  configId        String
+  afterModule     Int      // Break occurs after this module number
+  durationMinutes Int      // Duration in minutes (e.g., 10, 20)
+  
+  config          SchoolScheduleConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@unique([configId, afterModule])
+  @@map("schedule_breaks")
+}

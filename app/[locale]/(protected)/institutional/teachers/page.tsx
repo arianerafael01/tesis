@@ -74,6 +74,11 @@ export default async function TeachersPage() {
             }
           }
         }
+      },
+      incompatibilityDeclarations: {
+        include: {
+          incompatibilities: true
+        }
       }
     },
     orderBy: {

@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import WeeklyScheduleClient from './weekly-schedule-client'
 import { getCurrentUser } from '@/lib/permissions'
 import { redirect } from 'next/navigation'
+import { getScheduleConfigs } from './schedule-config-actions'
 
 export default async function WeeklySchedulePage() {
   const user = await getCurrentUser()
@@ -9,7 +10,9 @@ export default async function WeeklySchedulePage() {
   if (!user) {
     redirect('/es/auth/login')
   }
-  const teachers = await prisma.teacher.findMany({
+
+  const [teachers, scheduleConfigs] = await Promise.all([
+    prisma.teacher.findMany({
     include: {
       subjectsTeachers: {
         include: {
@@ -62,11 +65,13 @@ export default async function WeeklySchedulePage() {
     orderBy: {
       lastName: 'asc'
     }
-  })
+  }),
+    getScheduleConfigs(),
+  ])
 
   return (
     <div className="space-y-6">
-      <WeeklyScheduleClient teachers={teachers} userRole={user.role} />
+      <WeeklyScheduleClient teachers={teachers} userRole={user.role} scheduleConfigs={scheduleConfigs} />
     </div>
   )
 }

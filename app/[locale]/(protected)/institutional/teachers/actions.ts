@@ -515,7 +515,14 @@ export async function autoAssignSubjects(teacherId: string) {
     for (let i = 0; i <= daySlots.length - count; i++) {
       const slots = daySlots.slice(i, i + count)
       // Check if slots are contiguous (consecutive indices)
-      const isContiguous = slots.every((slot, idx) => idx === 0 || slot.index === slots[idx - 1].index + 1)
+      // Also ensure no large gaps (which would indicate crossing from tarde to mañana)
+      const isContiguous = slots.every((slot, idx) => {
+        if (idx === 0) return true
+        const diff = slot.index - slots[idx - 1].index
+        // Only consecutive (diff === 1) are truly contiguous
+        // A diff > 1 means there's a gap (like going from Módulo 17 to Módulo 1)
+        return diff === 1
+      })
       
       if (isContiguous) {
         return slots

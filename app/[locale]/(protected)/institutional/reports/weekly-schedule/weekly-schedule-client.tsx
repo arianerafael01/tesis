@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -11,6 +11,8 @@ import { useRouter } from '@/components/navigation'
 import { assignSubjectToTimeSlot } from '../../teachers/actions'
 import { autoAssignAllTeachers, unassignAllSubjects } from './actions'
 import { toast } from 'sonner'
+import { ScheduleConfigDialog } from './schedule-config-dialog'
+import { Shift } from '@/lib/generated/prisma'
 
 interface Teacher {
   id: string
@@ -61,6 +63,25 @@ interface Teacher {
   }[]
 }
 
+interface ScheduleConfig {
+  id: string
+  name: string
+  shift: Shift
+  startTime: string
+  isActive: boolean
+  modules: {
+    id: string
+    moduleNumber: number
+    startTime: string
+    endTime: string
+  }[]
+  breaks: {
+    id: string
+    afterModule: number
+    durationMinutes: number
+  }[]
+}
+
 const DAYS = [
   { value: 'M', label: 'Lunes' },
   { value: 'T', label: 'Martes' },
@@ -69,37 +90,64 @@ const DAYS = [
   { value: 'F', label: 'Viernes' },
 ] as const
 
-const TIME_SLOTS = [
-  'Módulo 1 (7:30-8:10)',
-  'Módulo 2 (8:10-8:50)',
-  'Módulo 3 (9:00-9:40)',
-  'Módulo 4 (9:40-10:20)',
-  'Módulo 5 (10:30-11:10)',
-  'Módulo 6 (11:10-11:50)',
-  'Módulo 7 (12:00-12:40)',
-  'Módulo 8 (12:40-13:20)',
-  'Módulo 9 (13:20-14:10)',
-  'Módulo 10 (14:10-14:50)',
-  'Módulo 11 (15:00-15:40)',
-  'Módulo 12 (15:40-16:20)',
-  'Módulo 13 (16:30-17:10)',
-  'Módulo 14 (17:10-17:50)',
-  'Módulo 15 (18:00-18:40)',
-  'Módulo 16 (18:40-19:20)',
-  'Módulo 17 (19:30-20:10)',
-]
-
 function getDayLabel(day: string) {
   return DAYS.find(d => d.value === day)?.label || day
 }
 
-export default function WeeklyScheduleClient({ teachers, userRole }: { teachers: Teacher[], userRole: 'ADMIN' | 'TEACHER' }) {
+export default function WeeklyScheduleClient({ 
+  teachers, 
+  userRole, 
+  scheduleConfigs 
+}: { 
+  teachers: Teacher[]
+  userRole: 'ADMIN' | 'TEACHER'
+  scheduleConfigs: ScheduleConfig[]
+}) {
   const t = useTranslations('weeklySchedulePage')
   const router = useRouter()
   const printRef = useRef<HTMLDivElement>(null)
   const isAdmin = userRole === 'ADMIN'
   const [selectedTeacherId, setSelectedTeacherId] = useState<string>('all')
   const [isAutoAssigning, setIsAutoAssigning] = useState(false)
+
+  // Generate TIME_SLOTS dynamically from active schedule configurations
+  const TIME_SLOTS = useMemo(() => {
+    const slots: string[] = []
+    
+    // Get active configurations for both shifts
+    const morningConfig = scheduleConfigs.find(c => c.shift === 'MorningShift' && c.isActive)
+    const afternoonConfig = scheduleConfigs.find(c => c.shift === 'LateShift' && c.isActive)
+    
+    // Add morning shift modules
+    if (morningConfig) {
+      morningConfig.modules.forEach(mod => {
+        slots.push(`Módulo ${mod.moduleNumber} (${mod.startTime}-${mod.endTime})`)
+      })
+    }
+    
+    // Add afternoon shift modules
+    if (afternoonConfig) {
+      afternoonConfig.modules.forEach(mod => {
+        slots.push(`Módulo ${mod.moduleNumber} (${mod.startTime}-${mod.endTime})`)
+      })
+    }
+    
+    // Fallback to default if no configurations exist
+    if (slots.length === 0) {
+      return [
+        'Módulo 1 (7:30-8:10)',
+        'Módulo 2 (8:10-8:50)',
+        'Módulo 3 (9:00-9:40)',
+        'Módulo 4 (9:40-10:20)',
+        'Módulo 5 (10:30-11:10)',
+        'Módulo 6 (11:10-11:50)',
+        'Módulo 7 (12:00-12:40)',
+        'Módulo 8 (12:40-13:20)',
+      ]
+    }
+    
+    return slots
+  }, [scheduleConfigs])
 
   const handlePrint = () => {
     if (!printRef.current) return
@@ -277,6 +325,7 @@ export default function WeeklyScheduleClient({ teachers, userRole }: { teachers:
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           {isAdmin && (
             <>
+              <ScheduleConfigDialog configs={scheduleConfigs} />
               <Button
                 onClick={handleUnassignAll}
                 disabled={!hasTeachersWithAvailability}

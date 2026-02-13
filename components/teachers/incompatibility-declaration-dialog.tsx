@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -20,6 +20,7 @@ import Image from 'next/image'
 import { processImageWithOCR, mapSchedulesToIncompatibilities, parseScheduleFromOCR, extractTeacherDataFromDDJJ, validateTeacherData } from '@/lib/ocr-utils'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/progress'
+import { useRouter } from 'next/navigation'
 
 type Day = 'M' | 'T' | 'W' | 'TH' | 'F'
 
@@ -83,15 +84,7 @@ export function IncompatibilityDeclarationDialog({
   open,
   onOpenChange,
 }: IncompatibilityDeclarationDialogProps) {
-  const [selectedSlots, setSelectedSlots] = useState<Set<string>>(() => {
-    const initial = new Set<string>()
-    if (existingDeclaration) {
-      existingDeclaration.incompatibilities.forEach(slot => {
-        initial.add(`${slot.day}-${slot.timeRange}`)
-      })
-    }
-    return initial
-  })
+  const [selectedSlots, setSelectedSlots] = useState<Set<string>>(new Set())
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [scannedDocument, setScannedDocument] = useState<string | null>(null)
   const [isScanning, setIsScanning] = useState(false)
@@ -100,6 +93,27 @@ export function IncompatibilityDeclarationDialog({
   const [ocrResults, setOcrResults] = useState<string | null>(null)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const router = useRouter()
+
+  // Reset state when teacherId changes or when dialog opens
+  useEffect(() => {
+    if (open) {
+      // Reset all states to initial values
+      const initial = new Set<string>()
+      if (existingDeclaration) {
+        existingDeclaration.incompatibilities.forEach(slot => {
+          initial.add(`${slot.day}-${slot.timeRange}`)
+        })
+      }
+      setSelectedSlots(initial)
+      setScannedDocument(null)
+      setIsScanning(false)
+      setIsProcessingOCR(false)
+      setOcrProgress(0)
+      setOcrResults(null)
+      setValidationErrors([])
+    }
+  }, [teacherId, open, existingDeclaration])
 
   const toggleSlot = (day: Day, timeRange: string) => {
     const key = `${day}-${timeRange}`
@@ -266,6 +280,9 @@ export function IncompatibilityDeclarationDialog({
       const result = await autoGenerateAvailability(teacherId)
       toast.success(`Disponibilidad generada: ${result.availabilitiesCreated} horarios disponibles`)
       
+      // Refresh the page to load updated data
+      router.refresh()
+      
       onOpenChange(false)
     } catch (error: any) {
       toast.error(error.message || 'Error al guardar la declaración jurada')
@@ -276,23 +293,19 @@ export function IncompatibilityDeclarationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-y-auto w-full">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="flex items-center gap-2 text-lg">
             <Icon icon="heroicons-outline:document-text" className="w-5 h-5" />
-            Declaración Jurada de Incompatibilidades
+            Declaración Jurada de Incompatibilidades - {teacherName}
           </DialogTitle>
-          <DialogDescription className="text-sm">
-            Profesor: <strong>{teacherName}</strong>
-            <br />
-            Seleccione los horarios en los que el profesor <strong>NO PUEDE</strong> dictar clases porque trabaja en otra institución.
-            <br />
-            Los horarios NO seleccionados se considerarán como disponibles automáticamente.
+          <DialogDescription className="text-xs">
+            Seleccione los horarios en los que el profesor <strong>NO PUEDE</strong> dictar clases. Los horarios NO seleccionados se considerarán disponibles.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mb-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <div className="mb-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Input
               ref={fileInputRef}
               type="file"
@@ -304,129 +317,96 @@ export function IncompatibilityDeclarationDialog({
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={handleScanClick}
               disabled={isScanning || isProcessingOCR}
-              className="w-full sm:w-auto"
             >
               {isScanning ? (
                 <>
-                  <Icon icon="heroicons-outline:arrow-path" className="w-4 h-4 mr-2 animate-spin" />
+                  <Icon icon="heroicons-outline:arrow-path" className="w-4 h-4 mr-1 animate-spin" />
                   Escaneando...
                 </>
               ) : (
                 <>
-                  <Icon icon="heroicons-outline:camera" className="w-4 h-4 mr-2" />
+                  <Icon icon="heroicons-outline:camera" className="w-4 h-4 mr-1" />
                   Escanear DDJJ
                 </>
               )}
             </Button>
             {scannedDocument && (
               <>
-                <div className="flex items-center gap-2 text-xs sm:text-sm text-green-600 dark:text-green-400">
-                  <Icon icon="heroicons-outline:check-circle" className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <span className="hidden sm:inline">Documento escaneado</span>
-                  <span className="sm:hidden">Escaneado</span>
+                <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                  <Icon icon="heroicons-outline:check-circle" className="w-4 h-4" />
+                  Escaneado
                 </div>
                 <Button
                   type="button"
                   variant="default"
+                  size="sm"
                   onClick={handleAutoDetect}
                   disabled={isProcessingOCR}
-                  className="w-full sm:w-auto"
                 >
                   {isProcessingOCR ? (
                     <>
-                      <Icon icon="heroicons-outline:arrow-path" className="w-4 h-4 mr-2 animate-spin" />
+                      <Icon icon="heroicons-outline:arrow-path" className="w-4 h-4 mr-1 animate-spin" />
                       Procesando...
                     </>
                   ) : (
                     <>
-                      <Icon icon="heroicons-outline:sparkles" className="w-4 h-4 mr-2" />
+                      <Icon icon="heroicons-outline:sparkles" className="w-4 h-4 mr-1" />
                       Auto-detectar
                     </>
                   )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setScannedDocument(null)}
+                >
+                  <Icon icon="heroicons-outline:trash" className="w-4 h-4" />
                 </Button>
               </>
             )}
           </div>
           {isProcessingOCR && (
-            <div className="mt-3 space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span>Procesando con OCR...</span>
-                <span>{ocrProgress}%</span>
-              </div>
-              <Progress value={ocrProgress} className="h-2" />
+            <div className="mt-2 space-y-1">
+              <Progress value={ocrProgress} className="h-1" />
             </div>
           )}
           {validationErrors.length > 0 && (
-            <Alert color="destructive" variant="soft" className="mt-3">
-              <Icon icon="heroicons-outline:exclamation-triangle" className="w-4 h-4" />
+            <Alert color="destructive" variant="soft" className="mt-2 py-2">
               <AlertDescription className="text-xs">
-                <div className="font-semibold mb-1">El documento no puede ser importado:</div>
-                <ul className="list-disc list-inside space-y-1">
-                  {validationErrors.map((error, index) => (
-                    <li key={index}>{error}</li>
-                  ))}
-                </ul>
+                <strong>Error:</strong> {validationErrors[0]}
               </AlertDescription>
             </Alert>
-          )}
-          {ocrResults && !isProcessingOCR && validationErrors.length === 0 && (
-            <Alert color="info" variant="soft" className="mt-3">
-              <Icon icon="heroicons-outline:information-circle" className="w-4 h-4" />
-              <AlertDescription className="text-xs">
-                OCR completado. Revisa los horarios detectados y ajusta manualmente si es necesario.
-              </AlertDescription>
-            </Alert>
-          )}
-          {scannedDocument && (
-            <div className="mt-3 border rounded-lg p-2 bg-muted/50">
-              <div className="relative w-full h-32 sm:h-48">
-                <Image
-                  src={scannedDocument}
-                  alt="Documento DDJJ escaneado"
-                  fill
-                  className="object-contain rounded"
-                />
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setScannedDocument(null)}
-                className="mt-2 w-full"
-              >
-                <Icon icon="heroicons-outline:trash" className="w-4 h-4 mr-2" />
-                Eliminar documento
-              </Button>
-            </div>
           )}
         </div>
 
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-3">
           <div>
-            <h3 className="font-semibold mb-2 sm:mb-3 flex items-center gap-2 text-sm sm:text-base">
+            <h3 className="font-semibold mb-1.5 flex items-center gap-1.5 text-sm">
               <Icon icon="heroicons-outline:sun" className="w-4 h-4" />
-              Turno Mañana (TM)
+              Turno Mañana
             </h3>
-            <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-              <div className="grid grid-cols-6 gap-1 sm:gap-2 min-w-[500px] sm:min-w-0">
-                <div className="font-medium text-xs sm:text-sm py-1">Horario</div>
+            <div className="border rounded-md overflow-hidden">
+              <div className="grid grid-cols-6 gap-0 text-xs">
+                <div className="font-medium py-1 px-1 bg-muted/50 border-b">Horario</div>
                 {DAYS.map(day => (
-                  <div key={day.value} className="font-medium text-xs sm:text-sm text-center py-1">
+                  <div key={day.value} className="font-medium text-center py-1 px-1 bg-muted/50 border-b border-l">
                     {day.label}
                   </div>
                 ))}
                 
                 {MORNING_SLOTS.map(slot => (
                   <React.Fragment key={slot}>
-                    <div className="text-[10px] sm:text-xs py-1 sm:py-2 leading-tight">{slot}</div>
+                    <div className="py-0.5 px-1 text-[10px] leading-tight border-b">{slot}</div>
                     {DAYS.map(day => (
-                      <div key={`${day.value}-${slot}`} className="flex items-center justify-center py-1">
+                      <div key={`${day.value}-${slot}`} className="flex items-center justify-center py-0.5 border-b border-l">
                         <Checkbox
                           checked={isSlotSelected(day.value, slot)}
                           onCheckedChange={() => toggleSlot(day.value, slot)}
-                          className="h-4 w-4 sm:h-5 sm:w-5"
+                          className="h-3.5 w-3.5"
                         />
                       </div>
                     ))}
@@ -437,28 +417,28 @@ export function IncompatibilityDeclarationDialog({
           </div>
 
           <div>
-            <h3 className="font-semibold mb-2 sm:mb-3 flex items-center gap-2 text-sm sm:text-base">
+            <h3 className="font-semibold mb-1.5 flex items-center gap-1.5 text-sm">
               <Icon icon="heroicons-outline:moon" className="w-4 h-4" />
-              Turno Tarde (TT)
+              Turno Tarde
             </h3>
-            <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-              <div className="grid grid-cols-6 gap-1 sm:gap-2 min-w-[500px] sm:min-w-0">
-                <div className="font-medium text-xs sm:text-sm py-1">Horario</div>
+            <div className="border rounded-md overflow-hidden">
+              <div className="grid grid-cols-6 gap-0 text-xs">
+                <div className="font-medium py-1 px-1 bg-muted/50 border-b">Horario</div>
                 {DAYS.map(day => (
-                  <div key={day.value} className="font-medium text-xs sm:text-sm text-center py-1">
+                  <div key={day.value} className="font-medium text-center py-1 px-1 bg-muted/50 border-b border-l">
                     {day.label}
                   </div>
                 ))}
                 
                 {AFTERNOON_SLOTS.map(slot => (
                   <React.Fragment key={slot}>
-                    <div className="text-[10px] sm:text-xs py-1 sm:py-2 leading-tight">{slot}</div>
+                    <div className="py-0.5 px-1 text-[10px] leading-tight border-b">{slot}</div>
                     {DAYS.map(day => (
-                      <div key={`${day.value}-${slot}`} className="flex items-center justify-center py-1">
+                      <div key={`${day.value}-${slot}`} className="flex items-center justify-center py-0.5 border-b border-l">
                         <Checkbox
                           checked={isSlotSelected(day.value, slot)}
                           onCheckedChange={() => toggleSlot(day.value, slot)}
-                          className="h-4 w-4 sm:h-5 sm:w-5"
+                          className="h-3.5 w-3.5"
                         />
                       </div>
                     ))}
@@ -467,37 +447,36 @@ export function IncompatibilityDeclarationDialog({
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="bg-amber-50 dark:bg-amber-950 p-3 sm:p-4 rounded-lg border border-amber-200 dark:border-amber-800">
-            <div className="flex items-start gap-2">
-              <Icon icon="heroicons-outline:exclamation-triangle" className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-              <div className="text-xs sm:text-sm text-amber-800 dark:text-amber-200">
-                <strong>Importante:</strong> Los horarios marcados son aquellos en los que el profesor <strong>NO PUEDE</strong> dar clases.
-                El sistema generará automáticamente la disponibilidad en todos los demás horarios.
+        <div className="flex items-center justify-between gap-4 pt-2 border-t">
+          <div className="bg-amber-50 dark:bg-amber-950 p-2 rounded border border-amber-200 dark:border-amber-800 flex-1">
+            <div className="flex items-start gap-1.5">
+              <Icon icon="heroicons-outline:exclamation-triangle" className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+              <div className="text-[10px] text-amber-800 dark:text-amber-200">
+                Los horarios marcados son aquellos en los que el profesor <strong>NO PUEDE</strong> dar clases.
               </div>
             </div>
           </div>
-
-          <div className="text-sm text-muted-foreground">
-            Horarios incompatibles seleccionados: <strong>{selectedSlots.size}</strong>
+          <div className="text-xs text-muted-foreground whitespace-nowrap">
+            Incompatibles: <strong>{selectedSlots.size}</strong>
           </div>
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting} className="w-full sm:w-auto">
+        <DialogFooter className="flex-row gap-2 pt-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting} size="sm">
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full sm:w-auto">
+          <Button onClick={handleSubmit} disabled={isSubmitting} size="sm">
             {isSubmitting ? (
               <>
-                <Icon icon="heroicons-outline:arrow-path" className="w-4 h-4 mr-2 animate-spin" />
+                <Icon icon="heroicons-outline:arrow-path" className="w-4 h-4 mr-1 animate-spin" />
                 Guardando...
               </>
             ) : (
               <>
-                <Icon icon="heroicons-outline:check" className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Guardar y Generar Disponibilidad</span>
-                <span className="sm:hidden">Guardar</span>
+                <Icon icon="heroicons-outline:check" className="w-4 h-4 mr-1" />
+                Guardar y Generar Disponibilidad
               </>
             )}
           </Button>

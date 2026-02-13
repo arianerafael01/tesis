@@ -70,53 +70,106 @@ export function parseScheduleFromOCR(ocrText: string): DetectedSchedule[] {
   let headerLineIndex = -1
   let dayColumns: Array<{ day: string; startCol: number }> = []
   
-  // First pass: find header row with day names
+  // First pass: find establishment and header row
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]
     const lowerLine = line.toLowerCase()
 
-    // Detect establishment names
-    if (lowerLine.includes('cenma') || lowerLine.includes('d g e j') || 
-        lowerLine.includes('escuela') || lowerLine.includes('colegio') || 
-        lowerLine.includes('instituto') || lowerLine.includes('establecimiento')) {
-      currentEstablishment = line.trim()
-      console.log('Found establishment:', currentEstablishment)
-      continue
+    // Detect establishment names - improved patterns
+    if (lowerLine.includes('repartición') || 
+        lowerLine.includes('establecimiento') ||
+        lowerLine.includes('instituto') ||
+        lowerLine.includes('oficina')) {
+      // Look for establishment name in next few lines or same line
+      const establishmentPatterns = [
+        /(?:cenma|d\s*g\s*e\s*j\s*y?\s*a|escuela|colegio|instituto)[^:]*(?:n°?\s*\d+)?[^:]*(?:anexo)?[^:]*/i,
+        /establecimiento[,\s:]+([^,\n]+)/i,
+      ]
+      
+      for (let j = i; j < Math.min(i + 3, lines.length); j++) {
+        for (const pattern of establishmentPatterns) {
+          const match = lines[j].match(pattern)
+          if (match) {
+            currentEstablishment = match[0].trim()
+            console.log('Found establishment:', currentEstablishment)
+            break
+          }
+        }
+        if (currentEstablishment) break
+      }
     }
 
     // Check if this is the header row with day names
-    const daysFound = Object.keys(dayMap).filter(day => lowerLine.includes(day))
-    if (daysFound.length >= 3) {
-      headerLineIndex = i
-      console.log('Found header row at line', i, ':', line)
-      
-      // Try to determine column positions for each day
-      for (const [dayName, dayCode] of Object.entries(dayMap)) {
-        const index = lowerLine.indexOf(dayName)
-        if (index !== -1) {
-          dayColumns.push({ day: dayCode, startCol: index })
+    // Look for "HORARIO DE PRESTACIÓN" header first
+    if (lowerLine.includes('horario') && lowerLine.includes('prestación')) {
+      console.log('Found schedule header at line', i)
+      // Day names should be in next 1-2 lines
+      for (let j = i + 1; j < Math.min(i + 3, lines.length); j++) {
+        const dayLine = lines[j].toLowerCase()
+        const daysFound = Object.keys(dayMap).filter(day => dayLine.includes(day))
+        
+        if (daysFound.length >= 3) {
+          headerLineIndex = j
+          console.log('Found day names row at line', j, ':', lines[j])
+          
+          // Determine column positions for each day
+          for (const [dayName, dayCode] of Object.entries(dayMap)) {
+            const index = dayLine.indexOf(dayName)
+            if (index !== -1) {
+              dayColumns.push({ day: dayCode, startCol: index })
+            }
+          }
+          dayColumns.sort((a, b) => a.startCol - b.startCol)
+          console.log('Day columns detected:', dayColumns)
+          break
         }
       }
-      dayColumns.sort((a, b) => a.startCol - b.startCol)
-      console.log('Day columns detected:', dayColumns)
-      break
+      if (headerLineIndex !== -1) break
+    }
+    
+    // Fallback: direct day name detection
+    if (headerLineIndex === -1) {
+      const daysFound = Object.keys(dayMap).filter(day => lowerLine.includes(day))
+      if (daysFound.length >= 3) {
+        headerLineIndex = i
+        console.log('Found header row at line', i, ':', line)
+        
+        for (const [dayName, dayCode] of Object.entries(dayMap)) {
+          const index = lowerLine.indexOf(dayName)
+          if (index !== -1) {
+            dayColumns.push({ day: dayCode, startCol: index })
+          }
+        }
+        dayColumns.sort((a, b) => a.startCol - b.startCol)
+        console.log('Day columns detected:', dayColumns)
+        break
+      }
     }
   }
 
   // Second pass: extract time ranges from data rows
   const startLine = headerLineIndex > 0 ? headerLineIndex + 1 : 0
-  const allTimeRanges: Array<{ start: string; end: string }> = []
+  const allTimeRanges: Array<{ start: string; end: string; position: number; line: string }> = []
+  
+  console.log('=== PARSING SCHEDULE TABLE ===')
+  console.log('Starting from line:', startLine)
+  console.log('Day columns:', dayColumns)
   
   for (let i = startLine; i < lines.length; i++) {
     const line = lines[i]
+    const lowerLine = line.toLowerCase()
     
     // Skip header and footer/notes
-    if (line.toLowerCase().includes('indicar') || 
-        line.toLowerCase().includes('consignar') ||
-        line.toLowerCase().includes('nota:') ||
-        line.toLowerCase().includes('lugar y fecha') ||
-        line.toLowerCase().includes('repartición') ||
-        line.toLowerCase().includes('horario de prestación')) {
+    if (lowerLine.includes('indicar') || 
+        lowerLine.includes('consignar') ||
+        lowerLine.includes('nota:') ||
+        lowerLine.includes('lugar y fecha') ||
+        lowerLine.includes('firma') ||
+        lowerLine.includes('repartición') ||
+        lowerLine.includes('nivel') ||
+        lowerLine.includes('cargo') ||
+        lowerLine.includes('carácter') ||
+        lowerLine.includes('horario de prestación')) {
       continue
     }
 
@@ -124,41 +177,92 @@ export function parseScheduleFromOCR(ocrText: string): DetectedSchedule[] {
     const timeRanges = detectTimeRanges(line)
     
     if (timeRanges.length > 0) {
-      console.log(`Line ${i}: Found ${timeRanges.length} time ranges:`, timeRanges)
-      allTimeRanges.push(...timeRanges)
+      console.log(`\nLine ${i}:`, line.substring(0, 150))
+      console.log(`  Found ${timeRanges.length} time ranges:`, timeRanges.map(r => `${r.start}-${r.end}`).join(', '))
       
-      // If we have day columns, try to associate
+      // Store ranges with their positions
+      for (const range of timeRanges) {
+        const rangePatterns = [
+          `${range.start}-${range.end}`,
+          `${range.start} - ${range.end}`,
+          `${range.start}  ${range.end}`,
+          range.start,
+        ]
+        
+        let position = -1
+        for (const pattern of rangePatterns) {
+          position = line.indexOf(pattern)
+          if (position !== -1) break
+        }
+        
+        if (position !== -1) {
+          allTimeRanges.push({ ...range, position, line })
+        }
+      }
+      
+      // If we have day columns, assign each range to the appropriate day
       if (dayColumns.length > 0) {
+        // Group ranges by their position to handle multiple ranges in same column
+        const rangesByPosition: Map<number, typeof timeRanges> = new Map()
+        
         for (const range of timeRanges) {
-          const rangeText = `${range.start}-${range.end}`
-          const rangePos = line.indexOf(rangeText) || line.indexOf(range.start)
+          const rangePatterns = [
+            `${range.start}-${range.end}`,
+            `${range.start} - ${range.end}`,
+            range.start,
+          ]
           
+          let rangePos = -1
+          for (const pattern of rangePatterns) {
+            rangePos = line.indexOf(pattern)
+            if (rangePos !== -1) break
+          }
+          
+          if (rangePos === -1) continue
+          
+          // Determine which day column this range belongs to
           let assignedDay: string | null = null
-          for (let j = 0; j < dayColumns.length; j++) {
-            const currentCol = dayColumns[j]
-            const nextCol = dayColumns[j + 1]
-            
-            if (nextCol) {
-              if (rangePos >= currentCol.startCol && rangePos < nextCol.startCol) {
-                assignedDay = currentCol.day
-                break
-              }
-            } else {
-              if (rangePos >= currentCol.startCol) {
-                assignedDay = currentCol.day
-                break
+          
+          // Method 1: Find closest column (within 50 chars)
+          let minDistance = Infinity
+          for (const col of dayColumns) {
+            const distance = Math.abs(rangePos - col.startCol)
+            if (distance < 50 && distance < minDistance) {
+              minDistance = distance
+              assignedDay = col.day
+            }
+          }
+          
+          // Method 2: Use column boundaries if no close match
+          if (!assignedDay) {
+            for (let j = 0; j < dayColumns.length; j++) {
+              const currentCol = dayColumns[j]
+              const nextCol = dayColumns[j + 1]
+              
+              if (nextCol) {
+                if (rangePos >= currentCol.startCol && rangePos < nextCol.startCol) {
+                  assignedDay = currentCol.day
+                  break
+                }
+              } else {
+                if (rangePos >= currentCol.startCol) {
+                  assignedDay = currentCol.day
+                  break
+                }
               }
             }
           }
           
           if (assignedDay) {
-            console.log(`  Assigned ${rangeText} to day ${assignedDay}`)
+            console.log(`    → ${range.start}-${range.end} assigned to ${assignedDay} (pos: ${rangePos}, col: ${dayColumns.find(c => c.day === assignedDay)?.startCol})`)
             schedules.push({
               day: assignedDay,
               timeSlots: [range.start, range.end],
               establishment: currentEstablishment,
               confidence: 0.8,
             })
+          } else {
+            console.log(`    ⚠️ ${range.start}-${range.end} could not be assigned to any day (pos: ${rangePos})`)
           }
         }
       }
@@ -168,7 +272,7 @@ export function parseScheduleFromOCR(ocrText: string): DetectedSchedule[] {
   // If we couldn't determine days from columns, assign all ranges to all weekdays
   // This is a fallback when OCR doesn't detect the table structure properly
   if (schedules.length === 0 && allTimeRanges.length > 0) {
-    console.log('No day columns detected, assigning all time ranges to all weekdays')
+    console.log('⚠️ No day columns detected, assigning all time ranges to all weekdays')
     const weekdays: Array<'M' | 'T' | 'W' | 'TH' | 'F'> = ['M', 'T', 'W', 'TH', 'F']
     
     for (const range of allTimeRanges) {
@@ -184,7 +288,28 @@ export function parseScheduleFromOCR(ocrText: string): DetectedSchedule[] {
     console.log(`Assigned ${allTimeRanges.length} time ranges to all ${weekdays.length} weekdays`)
   }
 
-  console.log('Total schedules parsed:', schedules.length)
+  // Summary of detected schedules
+  console.log('\n=== SCHEDULE DETECTION SUMMARY ===')
+  console.log('Total schedules detected:', schedules.length)
+  
+  const schedulesByDay = schedules.reduce((acc, s) => {
+    if (!acc[s.day]) acc[s.day] = []
+    acc[s.day].push(`${s.timeSlots[0]}-${s.timeSlots[1]}`)
+    return acc
+  }, {} as Record<string, string[]>)
+  
+  const dayNames: Record<string, string> = {
+    'M': 'Lunes',
+    'T': 'Martes', 
+    'W': 'Miércoles',
+    'TH': 'Jueves',
+    'F': 'Viernes'
+  }
+  
+  for (const [day, ranges] of Object.entries(schedulesByDay)) {
+    console.log(`${dayNames[day] || day}: ${ranges.length} horarios - ${ranges.join(', ')}`)
+  }
+  
   return schedules
 }
 
@@ -285,27 +410,47 @@ export function detectTimeRanges(text: string): Array<{ start: string; end: stri
   
   // Pattern variations found in DDJJ:
   // "18:15-19:15", "08:00-09:00", "18.15-19.15", "1815-1915" (no colon)
+  // Also handle OCR errors: "18 15-19 15", "18-15-19-15"
   const patterns = [
-    /(\d{1,2})[:\.](\d{2})\s*[-–]\s*(\d{1,2})[:\.](\d{2})/g,  // HH:MM-HH:MM or HH.MM-HH.MM
-    /(\d{1,2})[:\.](\d{2})\s+a\s+(\d{1,2})[:\.](\d{2})/g,     // HH:MM a HH:MM
-    /(\d{2})(\d{2})\s*[-–]\s*(\d{2})(\d{2})/g,                // HHMM-HHMM (no colon)
+    // Standard formats with colon or dot
+    /(\d{1,2})[:\.](\d{2})\s*[-–—]\s*(\d{1,2})[:\.](\d{2})/g,
+    // Format with spaces instead of colon (OCR error)
+    /(\d{1,2})\s+(\d{2})\s*[-–—]\s*(\d{1,2})\s+(\d{2})/g,
+    // Format with "a" or "al" between times
+    /(\d{1,2})[:\.](\d{2})\s+a[l]?\s+(\d{1,2})[:\.](\d{2})/g,
+    // Compact format without separator (HHMM-HHMM)
+    /(\d{2})(\d{2})\s*[-–—]\s*(\d{2})(\d{2})/g,
+    // Format with multiple dashes (OCR error: 18-15-19-15)
+    /(\d{1,2})[-–](\d{2})[-–](\d{1,2})[-–](\d{2})/g,
   ]
   
   for (const pattern of patterns) {
     let match
+    pattern.lastIndex = 0 // Reset regex state
     while ((match = pattern.exec(text)) !== null) {
-      const start = `${match[1]}:${match[2]}`
-      const end = `${match[3]}:${match[4]}`
+      let startHour = parseInt(match[1])
+      let startMin = parseInt(match[2])
+      let endHour = parseInt(match[3])
+      let endMin = parseInt(match[4])
       
       // Validate times (hours 0-23, minutes 0-59)
-      const startHour = parseInt(match[1])
-      const startMin = parseInt(match[2])
-      const endHour = parseInt(match[3])
-      const endMin = parseInt(match[4])
-      
       if (startHour >= 0 && startHour <= 23 && startMin >= 0 && startMin <= 59 &&
           endHour >= 0 && endHour <= 23 && endMin >= 0 && endMin <= 59) {
-        ranges.push({ start, end })
+        
+        // Ensure end time is after start time
+        const startMinutes = startHour * 60 + startMin
+        const endMinutes = endHour * 60 + endMin
+        
+        if (endMinutes > startMinutes) {
+          const start = `${startHour.toString().padStart(2, '0')}:${startMin.toString().padStart(2, '0')}`
+          const end = `${endHour.toString().padStart(2, '0')}:${endMin.toString().padStart(2, '0')}`
+          
+          // Avoid duplicates
+          if (!ranges.some(r => r.start === start && r.end === end)) {
+            ranges.push({ start, end })
+            console.log('Detected time range:', start, '-', end)
+          }
+        }
       }
     }
   }
@@ -381,26 +526,116 @@ export function extractTeacherDataFromDDJJ(ocrText: string): TeacherDataFromDDJJ
   let fullName: string | null = null
   let confidence = 0
   
-  for (const line of lines) {
-    // Extract DNI - pattern: "DNI (N° y Tipo) XX.XXX.XXX" or "24.992.613"
-    const dniPattern = /DNI[^0-9]*(\d{1,2}[\.\s]?\d{3}[\.\s]?\d{3})/i
-    const dniMatch = line.match(dniPattern)
-    if (dniMatch) {
-      // Remove dots and spaces, keep only numbers
-      dni = dniMatch[1].replace(/[\.\s]/g, '')
-      confidence += 0.5
-      console.log('DNI extracted:', dni)
-    }
+  // Join all lines to handle multi-line fields
+  const fullText = lines.join(' ')
+  
+  console.log('=== OCR TEXT EXTRACTION DEBUG ===')
+  console.log('Total lines:', lines.length)
+  console.log('First 500 chars of full text:', fullText.substring(0, 500))
+  
+  // Extract DNI - multiple patterns to handle OCR variations
+  const dniPatterns = [
+    // Pattern 1: "D.N.I. (N° y Tipo) 24.992.613" - most specific
+    /D\.?\s*N\.?\s*I\.?\s*\(\s*N°?\s*y\s*Tipo\s*\)\s*(\d{1,2}[\.\s]?\d{3}[\.\s]?\d{3})/i,
+    // Pattern 2: "DNI (N° y Tipo) 24.992.613"
+    /DNI\s*\(\s*N°?\s*y\s*Tipo\s*\)\s*(\d{1,2}[\.\s]?\d{3}[\.\s]?\d{3})/i,
+    // Pattern 3: Just "(N° y Tipo) 24.992.613"
+    /\(\s*N°?\s*y\s*Tipo\s*\)\s*(\d{1,2}[\.\s]?\d{3}[\.\s]?\d{3})/i,
+    // Pattern 4: "DNI: 24.992.613" or "DNI 24.992.613"
+    /D\.?\s*N\.?\s*I\.?\s*[:\s]+(\d{1,2}[\.\s]?\d{3}[\.\s]?\d{3})/i,
+    // Pattern 5: Just the number after dots (fallback)
+    /\.{3,}\s*(\d{1,2}[\.\s]?\d{3}[\.\s]?\d{3})\s*\.{3,}/,
+    // Pattern 6: Very permissive - any 7-8 digit number with dots
+    /(\d{1,2}[\.\s]\d{3}[\.\s]\d{3})/,
+  ]
+  
+  console.log('Trying to extract DNI with', dniPatterns.length, 'patterns...')
+  
+  for (let i = 0; i < dniPatterns.length; i++) {
+    const pattern = dniPatterns[i]
+    const match = fullText.match(pattern)
+    console.log(`Pattern ${i + 1}:`, pattern.toString().substring(0, 80), '- Match:', match ? 'YES' : 'NO')
     
-    // Extract full name - pattern: "APELLIDO Y NOMBRE: SURNAME NAME"
-    const namePattern = /APELLIDO\s+Y\s+NOMBRE:\s*([A-ZÁÉÍÓÚÑ\s]+?)[\.\-]/i
-    const nameMatch = line.match(namePattern)
-    if (nameMatch) {
-      fullName = nameMatch[1].trim()
-      confidence += 0.5
-      console.log('Full name extracted:', fullName)
+    if (match) {
+      const rawDni = match[1].replace(/[\.\s]/g, '')
+      console.log('  Raw DNI found:', match[1], '-> Cleaned:', rawDni, '-> Length:', rawDni.length)
+      
+      // Validate DNI length (should be 7-8 digits)
+      if (rawDni.length >= 7 && rawDni.length <= 8) {
+        dni = rawDni
+        confidence += 0.5
+        console.log('✅ DNI extracted successfully:', dni)
+        break
+      } else {
+        console.log('  ❌ DNI rejected: invalid length')
+      }
     }
   }
+  
+  if (!dni) {
+    console.log('❌ No DNI found with any pattern')
+    console.log('Searching for any 8-digit number in text...')
+    const anyNumberMatch = fullText.match(/\d{7,8}/g)
+    if (anyNumberMatch) {
+      console.log('Found numbers:', anyNumberMatch)
+    }
+  }
+  
+  // Extract full name - multiple patterns for variations
+  const namePatterns = [
+    // Pattern 1: "APELLIDO Y NOMBRE: RUFEIL FIORI EDUARDO............"
+    /APELLIDO\s+Y\s+NOMBRE:\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s]+?)(?:\.{3,}|D\.?\s*N\.?\s*I)/i,
+    // Pattern 2: More flexible with spacing
+    /APELLIDO\s+Y\s+NOMBRE:\s*([A-ZÁÉÍÓÚÑ\s]+?)(?=\s*\.{3,}|\s*D\.?\s*N\.?\s*I)/i,
+    // Pattern 3: Just after "NOMBRE:"
+    /NOMBRE:\s*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s]+?)(?:\.{3,}|D\.?\s*N\.?\s*I)/i,
+    // Pattern 4: Very permissive - capture until dots or DNI
+    /APELLIDO\s+Y\s+NOMBRE:\s*([A-ZÁÉÍÓÚÑ][^\.]+?)(?:\.{2,})/i,
+  ]
+  
+  console.log('Trying to extract name with', namePatterns.length, 'patterns...')
+  
+  for (let i = 0; i < namePatterns.length; i++) {
+    const pattern = namePatterns[i]
+    const match = fullText.match(pattern)
+    console.log(`Name Pattern ${i + 1}:`, pattern.toString().substring(0, 80), '- Match:', match ? 'YES' : 'NO')
+    
+    if (match) {
+      // Clean up the name: remove extra dots, trim, normalize spaces
+      const rawName = match[1]
+      fullName = rawName
+        .replace(/\.+/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+      
+      console.log('  Raw name found:', rawName, '-> Cleaned:', fullName)
+      
+      // Only accept if it has at least 2 words (first name + last name)
+      // and doesn't contain numbers or special chars
+      const words = fullName.split(' ').filter(w => w.length > 0)
+      const hasNoNumbers = !/\d/.test(fullName)
+      
+      console.log('  Words:', words.length, '- Has no numbers:', hasNoNumbers, '- Length:', fullName.length)
+      
+      if (words.length >= 2 && hasNoNumbers && fullName.length >= 5) {
+        confidence += 0.5
+        console.log('✅ Name extracted successfully:', fullName)
+        break
+      } else {
+        console.log('  ❌ Name rejected: validation failed')
+        fullName = null
+      }
+    }
+  }
+  
+  if (!fullName) {
+    console.log('❌ No name found with any pattern')
+  }
+  
+  console.log('=== FINAL EXTRACTION RESULTS ===')
+  console.log('DNI:', dni || 'NOT FOUND')
+  console.log('Name:', fullName || 'NOT FOUND')
+  console.log('Confidence:', confidence)
   
   return {
     dni,

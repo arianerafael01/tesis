@@ -52,6 +52,14 @@ interface Teacher {
       } | null
     }[]
   }[]
+  incompatibilityDeclarations?: {
+    id: string
+    incompatibilities: {
+      id: string
+      day: 'M' | 'T' | 'W' | 'TH' | 'F'
+      timeRange: string
+    }[]
+  }[]
 }
 
 interface Subject {
@@ -159,6 +167,7 @@ export default function TeachersTable({ teachers, availableSubjects }: { teacher
           teacherDNI={selectedTeacher.idNumber}
           teacherFirstName={selectedTeacher.firstName}
           teacherLastName={selectedTeacher.lastName}
+          existingDeclaration={selectedTeacher.incompatibilityDeclarations?.[0] || null}
           open={incompatibilityDialogOpen}
           onOpenChange={setIncompatibilityDialogOpen}
         />
