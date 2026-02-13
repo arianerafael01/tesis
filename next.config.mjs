@@ -1,14 +1,9 @@
 import createNextIntlPlugin from "next-intl/plugin";
-import nextra from "nextra";
 
 /** @type {import('next').NextConfig} */
 
 const withNextIntl = createNextIntlPlugin();
 
-const withNextra = nextra({
-  theme: "nextra-theme-docs",
-  themeConfig: "./theme.config.tsx",
-});
 const nextConfig = {
   // TypeScript configuration
   typescript: {
@@ -51,4 +46,4 @@ const nextConfig = {
   },
 };
 
-export default withNextIntl(withNextra(nextConfig));
+export default withNextIntl(nextConfig);
